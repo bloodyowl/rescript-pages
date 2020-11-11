@@ -1,3 +1,4 @@
+open StaticWebsite
 open Belt
 
 type dirent
@@ -52,7 +53,6 @@ let getCollectionItem = (slug, path) => {
   let file = readFileSync(path)
   let parsed = frontMatter(file)
   let meta = parsed["attributes"]
-  open StaticWebsite
   let item = {
     slug: slug,
     title: meta->Js.Dict.get("title")->Option.getWithDefault("Untitled"),
@@ -80,11 +80,9 @@ let getCollectionItems = path => {
   ->Map.String.fromArray
 }
 
-let getCollections = () => {
-  readdirSync(join(cwd(), "contents"), {"withFileTypes": true})
+let getCollections = config => {
+  readdirSync(join(cwd(), config.contentDirectory), {"withFileTypes": true})
   ->Array.keep(isDirectory)
   ->Array.map(item => (item->name, getCollectionItems(join3(cwd(), "contents", item->name))))
   ->Map.String.fromArray
 }
-
-Js.log(Js.Json.stringifyAny(getCollections()))

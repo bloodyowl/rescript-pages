@@ -62,25 +62,15 @@ module App = {
 
 // server
 
-StaticWebsiteServer.prerender(<App />, store =>
+let app = StaticWebsite.create(~contentDirectory="contents", ~cname="bloodyowl.io", <App />)
+
+StaticWebsiteServer.prerender(app, store =>
   Array.concatMany([
     ["/"],
-    store.items
-    ->Map.String.get("pages")
-    ->Option.map(Map.String.keysToArray)
-    ->Option.getWithDefault([])
-    ->Array.map(slug => `/${slug}`),
-    store.items
-    ->Map.String.get("posts")
-    ->Option.map(Map.String.keysToArray)
-    ->Option.getWithDefault([])
-    ->Array.map(slug => `/post/${slug}`),
-    store.lists
-    ->Map.String.get("posts")
-    ->Option.flatMap(posts => posts->Map.get(#desc))
-    ->Option.map(Map.Int.keysToArray)
-    ->Option.getWithDefault([])
-    ->Array.sliceToEnd(1)
+    store->StaticWebsiteServer.Store.getAll("pages")->Array.map(slug => `/${slug}`),
+    store->StaticWebsiteServer.Store.getAll("posts")->Array.map(slug => `/post/${slug}`),
+    store
+    ->StaticWebsiteServer.Store.getPages("posts")
     ->Array.map(page => `/posts/${page->Int.toString}`),
   ])
-)->Js.log
+)

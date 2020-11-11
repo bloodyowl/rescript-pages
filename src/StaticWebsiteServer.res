@@ -33,8 +33,25 @@ type values = {
   items: Map.String.t<Map.String.t<item>>,
 }
 
-let prerender = (app, getUrls: values => array<string>) => {
-  let collections = Collections.getCollections()
+module Store = {
+  let getAll = (store: values, collection) => {
+    store.items
+    ->Map.String.get(collection)
+    ->Option.map(Map.String.keysToArray)
+    ->Option.getWithDefault([])
+  }
+  let getPages = (store: values, collection) => {
+    store.lists
+    ->Map.String.get(collection)
+    ->Option.flatMap(items => items->Map.get(#desc))
+    ->Option.map(Map.Int.keysToArray)
+    ->Option.map(array => array->Array.sliceToEnd(1))
+    ->Option.getWithDefault([])
+  }
+}
+
+let getFiles = (App(app, config), getUrls: values => array<string>) => {
+  let collections = Collections.getCollections(config)
 
   let store =
     collections
@@ -167,7 +184,7 @@ let prerender = (app, getUrls: values => array<string>) => {
       ->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)}</script>
       `,
     )
-  })
+  })->Map.String.fromArray
 
   let lists =
     store.lists
@@ -180,8 +197,8 @@ let prerender = (app, getUrls: values => array<string>) => {
         ->Map.Int.toArray
         ->Array.reduce(acc, (acc, (page, items)) =>
           acc->Map.String.set(
-            `api/${collectionName}/pages/${direction->directionAsString}/${page->Int.toString}`,
-            items,
+            `api/${collectionName}/pages/${direction->directionAsString}/${page->Int.toString}.json`,
+            items->Js.Json.serializeExn,
           )
         )
       )
@@ -193,11 +210,15 @@ let prerender = (app, getUrls: values => array<string>) => {
       collection
       ->Map.String.toArray
       ->Array.reduce(acc, (acc, (id, item)) =>
-        acc->Map.String.set(`api/${collectionName}/items/${id}`, item)
+        acc->Map.String.set(`api/${collectionName}/items/${id}.json`, item->Js.Json.serializeExn)
       )
     )
 
-  Js.log(lists)
-  Js.log(items)
-  Js.log(prerenderedPages)
+  prerenderedPages->Map.String.mergeMany(
+    Array.concatMany([lists->Map.String.toArray, items->Map.String.toArray]),
+  )
+}
+
+let prerender = (app, getUrls) => {
+  getFiles(app, getUrls)->Js.log
 }

@@ -166,7 +166,8 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
           )),
         )),
       })
-      let url = `/api/${collection}/pages/${direction->directionAsString}/${page->Int.toString}`
+      let url =
+        `/api/${collection}/pages/${direction->directionAsString}/${page->Int.toString}.json`
       let future =
         Request.make(~url, ~responseType=Text, ())
         ->Future.mapError(~propagateCancel=true, mapError)
@@ -223,7 +224,7 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
           collection->Option.getWithDefault(Map.String.empty)->Map.String.set(id, status),
         )),
       })
-      let url = `/api/${collection}/items/${id}`
+      let url = `/api/${collection}/items/${id}.json`
       let future =
         Request.make(~url, ~responseType=Text, ())
         ->Future.mapError(~propagateCancel=true, mapError)
@@ -255,7 +256,28 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
 
 @bs.get external textContent: Dom.element => string = "textContent"
 
-let start = app => {
+type config = {
+  contentDirectory: string,
+  publicDirectory: option<string>,
+  translationsFile: option<string>,
+  cname: option<string>,
+}
+
+type app = App(React.element, config)
+
+let create = (~contentDirectory, ~publicDirectory=?, ~translationsFile=?, ~cname=?, app) => {
+  App(
+    app,
+    {
+      contentDirectory: contentDirectory,
+      publicDirectory: publicDirectory,
+      translationsFile: translationsFile,
+      cname: cname,
+    },
+  )
+}
+
+let start = (App(app, _)) => {
   let root = ReactDOM.querySelector("#root")
   let initialData =
     ReactDOM.querySelector("#data")->Option.map(textContent)->Option.map(Js.Json.deserializeUnsafe)
