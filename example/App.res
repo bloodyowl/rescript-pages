@@ -57,15 +57,23 @@ module App = {
   }
 }
 
-StaticWebsite.make(
-  ~contentDirectory="contents",
-  ~getUrlsToPrerender=({getAll, getPages}) =>
-    Array.concatMany([
-      ["/"],
-      getAll("pages")->Array.map(slug => `/${slug}`),
-      getAll("posts")->Array.map(slug => `/post/${slug}`),
-      getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
-    ]),
-  ~cname="bloodyowl.io",
+let default = StaticWebsite.make(
   <App />,
+  [
+    {
+      contentDirectory: "contents",
+      distDirectory: "dist",
+      publicPath: "/",
+      publicDirectory: Some("public"),
+      localeFile: None,
+      getUrlsToPrerender: ({getAll, getPages}) =>
+        Array.concatMany([
+          ["/"],
+          getAll("pages")->Array.map(slug => `/${slug}`),
+          getAll("posts")->Array.map(slug => `/post/${slug}`),
+          getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
+        ]),
+      cname: None,
+    },
+  ],
 )

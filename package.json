@@ -16,8 +16,12 @@
   },
   "dependencies": {
     "bs-fetch": "^0.6.2",
+    "copy-webpack-plugin": "^6.3.0",
+    "express": "^4.17.1",
     "front-matter": "^4.0.2",
     "highlight.js": "^10.3.2",
+    "html-webpack-plugin": "^4.5.0",
+    "inline-translations-webpack-plugin": "^1.0.1",
     "memfs": "^3.2.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
@@ -27,7 +31,7 @@
     "rescript-asyncdata": "^2.0.0",
     "rescript-future": "^1.0.4",
     "rescript-request": "^1.0.2",
-    "webpack": "^5.4.0",
+    "webpack": "^4.0.0",
     "webpack-cli": "^4.1.0"
   }
 }

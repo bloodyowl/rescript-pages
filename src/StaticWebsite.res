@@ -263,15 +263,15 @@ type urlStore = {
 
 type config = {
   contentDirectory: string,
+  distDirectory: string,
+  publicPath: string,
+  localeFile: option<string>,
   publicDirectory: option<string>,
   getUrlsToPrerender: urlStore => array<string>,
   cname: option<string>,
 }
 
 type app = App(React.element, config)
-
-type window
-@bs.val external window: window = "window"
 
 let start = app => {
   let root = ReactDOM.querySelector("#root")
@@ -285,14 +285,12 @@ let start = app => {
   }
 }
 
-let make = (~contentDirectory, ~getUrlsToPrerender, ~publicDirectory=?, ~cname=?, app) => {
-  App(
-    app,
-    {
-      contentDirectory: contentDirectory,
-      getUrlsToPrerender: getUrlsToPrerender,
-      publicDirectory: publicDirectory,
-      cname: cname,
-    },
-  )
+type window
+@bs.val external window: window = "window"
+
+let make = (app, configs) => {
+  if Js.typeof(window) != "undefined" {
+    start(app)
+  }
+  (app, configs)
 }
