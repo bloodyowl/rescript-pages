@@ -1,0 +1,32 @@
+{
+  "name": "static-website",
+  "version": "0.1.0",
+  "scripts": {
+    "clean": "bsb -clean-world",
+    "build": "bsb -make-world",
+    "watch": "bsb -make-world -w"
+  },
+  "keywords": [
+    "BuckleScript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "bs-platform": "^8.0.0"
+  },
+  "dependencies": {
+    "bs-fetch": "^0.6.2",
+    "front-matter": "^4.0.2",
+    "highlight.js": "^10.3.2",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "reason-highlightjs": "^0.2.1",
+    "reason-react": "^0.9.1",
+    "remarkable": "^2.0.1",
+    "rescript-asyncdata": "^2.0.0",
+    "rescript-future": "^1.0.4",
+    "rescript-request": "^1.0.2",
+    "webpack": "^5.3.2",
+    "webpack-cli": "^4.1.0"
+  }
+}

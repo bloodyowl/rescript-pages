@@ -1,0 +1,3 @@
+# StaticWebsite
+
+Work in progress
