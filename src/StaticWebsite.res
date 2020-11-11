@@ -256,28 +256,24 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
 
 @bs.get external textContent: Dom.element => string = "textContent"
 
+type urlStore = {
+  getAll: string => array<string>,
+  getPages: string => array<int>,
+}
+
 type config = {
   contentDirectory: string,
   publicDirectory: option<string>,
-  translationsFile: option<string>,
+  getUrlsToPrerender: urlStore => array<string>,
   cname: option<string>,
 }
 
 type app = App(React.element, config)
 
-let create = (~contentDirectory, ~publicDirectory=?, ~translationsFile=?, ~cname=?, app) => {
-  App(
-    app,
-    {
-      contentDirectory: contentDirectory,
-      publicDirectory: publicDirectory,
-      translationsFile: translationsFile,
-      cname: cname,
-    },
-  )
-}
+type window
+@bs.val external window: window = "window"
 
-let start = (App(app, _)) => {
+let start = app => {
   let root = ReactDOM.querySelector("#root")
   let initialData =
     ReactDOM.querySelector("#data")->Option.map(textContent)->Option.map(Js.Json.deserializeUnsafe)
@@ -287,4 +283,16 @@ let start = (App(app, _)) => {
   | (Some(root), None) => ReactDOM.render(<Context> app </Context>, root)
   | (None, _) => Js.Console.error(`Can't find the app's root container`)
   }
+}
+
+let make = (~contentDirectory, ~getUrlsToPrerender, ~publicDirectory=?, ~cname=?, app) => {
+  App(
+    app,
+    {
+      contentDirectory: contentDirectory,
+      getUrlsToPrerender: getUrlsToPrerender,
+      publicDirectory: publicDirectory,
+      cname: cname,
+    },
+  )
 }

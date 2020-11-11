@@ -57,20 +57,15 @@ module App = {
   }
 }
 
-// client
-// StaticWebsite.start(<App />)
-
-// server
-
-let app = StaticWebsite.create(~contentDirectory="contents", ~cname="bloodyowl.io", <App />)
-
-StaticWebsiteServer.prerender(app, store =>
-  Array.concatMany([
-    ["/"],
-    store->StaticWebsiteServer.Store.getAll("pages")->Array.map(slug => `/${slug}`),
-    store->StaticWebsiteServer.Store.getAll("posts")->Array.map(slug => `/post/${slug}`),
-    store
-    ->StaticWebsiteServer.Store.getPages("posts")
-    ->Array.map(page => `/posts/${page->Int.toString}`),
-  ])
+StaticWebsite.make(
+  ~contentDirectory="contents",
+  ~getUrlsToPrerender=({getAll, getPages}) =>
+    Array.concatMany([
+      ["/"],
+      getAll("pages")->Array.map(slug => `/${slug}`),
+      getAll("posts")->Array.map(slug => `/post/${slug}`),
+      getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
+    ]),
+  ~cname="bloodyowl.io",
+  <App />,
 )

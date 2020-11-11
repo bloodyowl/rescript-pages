@@ -18,6 +18,7 @@
     "bs-fetch": "^0.6.2",
     "front-matter": "^4.0.2",
     "highlight.js": "^10.3.2",
+    "memfs": "^3.2.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "reason-highlightjs": "^0.2.1",
@@ -26,7 +27,7 @@
     "rescript-asyncdata": "^2.0.0",
     "rescript-future": "^1.0.4",
     "rescript-request": "^1.0.2",
-    "webpack": "^5.3.2",
+    "webpack": "^5.4.0",
     "webpack-cli": "^4.1.0"
   }
 }

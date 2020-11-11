@@ -50,7 +50,7 @@ module Store = {
   }
 }
 
-let getFiles = (App(app, config), getUrls: values => array<string>) => {
+let getFiles = (App(app, config), getUrls: urlStore => array<string>) => {
   let collections = Collections.getCollections(config)
 
   let store =
@@ -77,7 +77,11 @@ let getFiles = (App(app, config), getUrls: values => array<string>) => {
       }
     })
 
-  let prerenderedPages = getUrls(store)->Array.map(serverUrl => {
+  let prerenderedPages = getUrls({
+    getAll: Store.getAll(store),
+    getPages: Store.getPages(store),
+  })
+  ->Array.map(serverUrl => {
     let context: Context.t = {
       lists: store.lists->Map.String.map(collection =>
         collection->Map.map(sortedCollection =>
@@ -184,7 +188,8 @@ let getFiles = (App(app, config), getUrls: values => array<string>) => {
       ->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)}</script>
       `,
     )
-  })->Map.String.fromArray
+  })
+  ->Map.String.fromArray
 
   let lists =
     store.lists
