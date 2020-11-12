@@ -38,6 +38,9 @@ external registerLanguage: (hjs, string, language) => unit = "registerLanguage"
 
 hjs->registerLanguage("reason", reason)
 
+@bs.module("emotion-server")
+external renderStylesToString: string => string = "renderStylesToString"
+
 let remarkable = remarkable(
   "full",
   {
@@ -87,9 +90,7 @@ let getCollections = config => {
   ->Map.String.fromArray
 }
 
-let paginateBy = 20
-
-let paginate = array => {
+let paginate = (array, paginateBy) => {
   let chunkTotal =
     array->Array.length / paginateBy + (mod(array->Array.length, paginateBy) > 0 ? 1 : 0)
   Array.range(1, chunkTotal)->Array.reduce(Map.Int.empty, (acc, chunkIndex) => {
@@ -97,7 +98,7 @@ let paginate = array => {
       chunkIndex,
       {
         hasPreviousPage: chunkIndex > 1,
-        hasNextPage: chunkIndex < chunkTotal - 1,
+        hasNextPage: chunkIndex < chunkTotal,
         items: array->Array.slice(~offset=(chunkIndex - 1) * paginateBy, ~len=paginateBy),
       },
     )
@@ -113,9 +114,7 @@ let all = array => {
 }
 
 type values = {
-  lists: Map.String.t<
-    Map.t<DirectionComparable.t, Map.Int.t<paginated<listItem>>, DirectionComparable.identity>,
-  >,
+  lists: Map.String.t<Map.String.t<Map.Int.t<paginated<listItem>>>>,
   items: Map.String.t<Map.String.t<item>>,
 }
 
@@ -129,7 +128,7 @@ module Store = {
   let getPages = (store: values, collection) => {
     store.lists
     ->Map.String.get(collection)
-    ->Option.flatMap(items => items->Map.get(#desc))
+    ->Option.flatMap(items => items->Map.String.get(#desc->directionAsString))
     ->Option.map(Map.Int.keysToArray)
     ->Option.map(array => array->Array.sliceToEnd(1))
     ->Option.getWithDefault([])
@@ -149,9 +148,8 @@ external renderStatic: unit => {
   "title": string,
 } = "renderStatic"
 
-let getFiles = (app, config, webpackHtml) => {
+let getFiles = (app, contextComponent, config, webpackHtml) => {
   let collections = getCollections(config)
-
   let store =
     collections
     ->Map.String.toArray
@@ -164,13 +162,20 @@ let getFiles = (app, config, webpackHtml) => {
       let listItems =
         collectionItems->Map.String.valuesToArray->Array.map(((_item, listItem)) => listItem)
       let descendendingListItems = listItems->Array.reverse
-      let ascending = paginate(listItems)->Map.Int.set(0, all(listItems))
-      let decending = paginate(descendendingListItems)->Map.Int.set(0, all(descendendingListItems))
+      let ascending = paginate(listItems, config.paginateBy)->Map.Int.set(0, all(listItems))
+      let decending =
+        paginate(descendendingListItems, config.paginateBy)->Map.Int.set(
+          0,
+          all(descendendingListItems),
+        )
 
       {
         lists: acc.lists->Map.String.set(
           collection,
-          Map.fromArray(~id=module(DirectionComparable), [(#asc, ascending), (#desc, decending)]),
+          Map.String.fromArray([
+            (#asc->directionAsString, ascending),
+            (#desc->directionAsString, decending),
+          ]),
         ),
         items: acc.items->Map.String.set(collection, items),
       }
@@ -183,63 +188,69 @@ let getFiles = (app, config, webpackHtml) => {
   ->Array.map(serverUrl => {
     let context: Context.t = {
       lists: store.lists->Map.String.map(collection =>
-        collection->Map.map(sortedCollection =>
+        collection->Map.String.map(sortedCollection =>
           sortedCollection->Map.Int.map(items => AsyncData.Done(Ok(items)))
         )
       ),
       items: store.items->Map.String.map(collection =>
         collection->Map.String.map(items => AsyncData.Done(Ok(items)))
       ),
-      listsRequests: Map.String.empty,
-      itemsRequests: Map.String.empty,
+      listsRequests: MutableMap.String.make(),
+      itemsRequests: MutableMap.String.make(),
     }
-    let html = ReactDOMServer.renderToString(
-      <Context.Provider value={(context, _ => ())}>
-        {React.cloneElement(
-          app,
+    let html = renderStylesToString(
+      ReactDOMServer.renderToString({
+        React.createElement(
+          contextComponent,
           {
-            "serverUrl": {
-              let path = switch serverUrl {
-              | "" | "/" => list{}
-              /* remove the preceeding /, which every pathname seems to have */
-              | _ =>
-                let serverUrl =
-                  serverUrl->Js.String2.startsWith("/")
-                    ? serverUrl->Js.String2.sliceToEnd(~from=1)
-                    : serverUrl
-                /* remove the trailing /, which some pathnames might have. Ugh */
-                let serverUrl = switch Js.String2.get(serverUrl, Js.String2.length(serverUrl) - 1) {
-                | "/" => Js.String.slice(~from=0, ~to_=-1, serverUrl)
-                | _ => serverUrl
-                }
-                serverUrl->Js.String2.split("/")->List.fromArray
-              }
-
+            "value": (context, _ => ()),
+            "children": React.cloneElement(
+              app,
               {
-                path: path,
-                hash: "",
-                search: "",
-              }
-            },
+                "serverUrl": {
+                  let path = switch serverUrl {
+                  | "" | "/" => list{}
+                  /* remove the preceeding /, which every pathname seems to have */
+                  | _ =>
+                    let serverUrl =
+                      serverUrl->Js.String2.startsWith("/")
+                        ? serverUrl->Js.String2.sliceToEnd(~from=1)
+                        : serverUrl
+                    /* remove the trailing /, which some pathnames might have. Ugh */
+                    let serverUrl = switch Js.String2.get(
+                      serverUrl,
+                      Js.String2.length(serverUrl) - 1,
+                    ) {
+                    | "/" => Js.String.slice(~from=0, ~to_=-1, serverUrl)
+                    | _ => serverUrl
+                    }
+                    serverUrl->Js.String2.split("/")->List.fromArray
+                  }
+                  {
+                    path: path,
+                    hash: "",
+                    search: "",
+                  }
+                },
+              },
+            ),
           },
-        )}
-      </Context.Provider>,
+        )
+      }),
     )
+
     let initialData: Context.t = {
       lists: context.listsRequests
-      ->Map.String.toArray
+      ->MutableMap.String.toArray
       ->Array.reduce(Map.String.empty, (acc, (collectionKey, collectionDirections)) =>
         acc->Map.String.update(collectionKey, _ => Some(
           collectionDirections
-          ->Map.toArray
-          ->Array.reduce(Map.make(~id=module(DirectionComparable)), (acc, (
-            direction,
-            pagesToRender,
-          )) =>
-            acc->Map.update(direction, _ =>
+          ->Map.String.toArray
+          ->Array.reduce(Map.String.empty, (acc, (direction, pagesToRender)) =>
+            acc->Map.String.update(direction, _ =>
               context.lists
               ->Map.String.get(collectionKey)
-              ->Option.flatMap(value => value->Map.get(direction))
+              ->Option.flatMap(value => value->Map.String.get(direction))
               ->Option.flatMap(pages => Some(
                 pagesToRender->Set.Int.reduce(Map.Int.empty, (acc, key) =>
                   acc->Map.Int.update(key, _ => pages->Map.Int.get(key))
@@ -250,7 +261,7 @@ let getFiles = (app, config, webpackHtml) => {
         ))
       ),
       items: context.itemsRequests
-      ->Map.String.toArray
+      ->MutableMap.String.toArray
       ->Array.reduce(Map.String.empty, (acc, (collectionKey, idsToRender)) =>
         acc->Map.String.update(collectionKey, _ =>
           context.items
@@ -262,8 +273,8 @@ let getFiles = (app, config, webpackHtml) => {
           ))
         )
       ),
-      listsRequests: Map.String.empty,
-      itemsRequests: Map.String.empty,
+      listsRequests: MutableMap.String.make(),
+      itemsRequests: MutableMap.String.make(),
     }
     let initialData =
       initialData->Js.Json.serializeExn->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)
@@ -280,13 +291,13 @@ let getFiles = (app, config, webpackHtml) => {
     ->Map.String.toArray
     ->Array.reduce(Map.String.empty, (acc, (collectionName, collection)) =>
       collection
-      ->Map.toArray
+      ->Map.String.toArray
       ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
         sortedCollection
         ->Map.Int.toArray
         ->Array.reduce(acc, (acc, (page, items)) =>
           acc->Map.String.set(
-            `/api/${collectionName}/pages/${direction->directionAsString}/${page->Int.toString}.json`,
+            `/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`,
             items->Js.Json.serializeExn,
           )
         )

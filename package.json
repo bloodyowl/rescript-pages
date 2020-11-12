@@ -15,10 +15,16 @@
     "bs-platform": "^8.0.0"
   },
   "dependencies": {
+    "@emotion/server": "^11.0.0",
+    "bs-css-emotion": "^2.1.0",
     "bs-fetch": "^0.6.2",
+    "chokidar": "^3.4.3",
     "copy-webpack-plugin": "^6.3.0",
+    "emotion": "^10.0.7",
+    "emotion-server": "^10.0.27",
     "express": "^4.17.1",
     "front-matter": "^4.0.2",
+    "get-port": "^5.1.1",
     "highlight.js": "^10.3.2",
     "html-webpack-plugin": "^4.5.0",
     "inline-translations-webpack-plugin": "^1.0.1",
@@ -33,6 +39,7 @@
     "rescript-future": "^1.0.4",
     "rescript-request": "^1.0.2",
     "webpack": "^4.0.0",
-    "webpack-cli": "^4.1.0"
+    "webpack-cli": "^4.1.0",
+    "ws": "^7.4.0"
   }
 }

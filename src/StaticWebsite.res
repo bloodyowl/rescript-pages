@@ -29,16 +29,6 @@ type paginated<'a> = {
 
 type direction = [#asc | #desc]
 external directionAsString: direction => string = "%identity"
-let cmp = (a, b) =>
-  switch (a, b) {
-  | (#asc, #desc) => 1
-  | (#desc, #asc) => -1
-  | _ => 0
-  }
-module DirectionComparable = Id.MakeComparable({
-  type t = direction
-  let cmp = cmp
-})
 
 module Link = {
   @react.component
@@ -61,25 +51,17 @@ module Link = {
 
 module Context = {
   type t = {
-    lists: Map.String.t<
-      Map.t<
-        DirectionComparable.t,
-        Map.Int.t<AsyncData.t<result<paginated<listItem>, error>>>,
-        DirectionComparable.identity,
-      >,
-    >,
+    lists: Map.String.t<Map.String.t<Map.Int.t<AsyncData.t<result<paginated<listItem>, error>>>>>,
     items: Map.String.t<Map.String.t<AsyncData.t<result<item, error>>>>,
-    mutable listsRequests: Map.String.t<
-      Map.t<DirectionComparable.t, Set.Int.t, DirectionComparable.identity>,
-    >,
-    mutable itemsRequests: Map.String.t<Set.String.t>,
+    mutable listsRequests: MutableMap.String.t<Map.String.t<Set.Int.t>>,
+    mutable itemsRequests: MutableMap.String.t<Set.String.t>,
   }
   type context = (t, (t => t) => unit)
   let default = {
     lists: Map.String.empty,
     items: Map.String.empty,
-    listsRequests: Map.String.empty,
-    itemsRequests: Map.String.empty,
+    listsRequests: MutableMap.String.make(),
+    itemsRequests: MutableMap.String.make(),
   }
   let defaultSetState: (t => t) => unit = _ => ()
   let context = React.createContext((default, defaultSetState))
@@ -127,20 +109,20 @@ module Head = {
 let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
   result<paginated<listItem>, error>,
 > => {
-  let ({lists, listsRequests} as context: Context.t, setContext) = React.useContext(Context.context)
-  context.listsRequests =
-    listsRequests->Map.String.update(collection, collection => Some(
-      collection
-      ->Option.getWithDefault(Map.make(~id=module(DirectionComparable)))
-      ->Map.update(direction, requests => Some(
-        requests->Option.getWithDefault(Set.Int.empty)->Set.Int.add(page),
-      )),
-    ))
+  let direction = direction->directionAsString
+  let ({lists, listsRequests}: Context.t, setContext) = React.useContext(Context.context)
+  listsRequests->MutableMap.String.update(collection, collection => Some(
+    collection
+    ->Option.getWithDefault(Map.String.empty)
+    ->Map.String.update(direction, requests => Some(
+      requests->Option.getWithDefault(Set.Int.empty)->Set.Int.add(page),
+    )),
+  ))
 
   React.useEffect1(() => {
     switch lists
     ->Map.String.get(collection)
-    ->Option.flatMap(collection => collection->Map.get(direction))
+    ->Option.flatMap(collection => collection->Map.String.get(direction))
     ->Option.flatMap(sortedCollection => sortedCollection->Map.Int.get(page)) {
     | Some(_) => None
     | None =>
@@ -149,14 +131,13 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
         ...context,
         lists: context.lists->Map.String.update(collection, collection => Some(
           collection
-          ->Option.getWithDefault(Map.make(~id=module(DirectionComparable)))
-          ->Map.update(direction, sortedCollection => Some(
+          ->Option.getWithDefault(Map.String.empty)
+          ->Map.String.update(direction, sortedCollection => Some(
             sortedCollection->Option.getWithDefault(Map.Int.empty)->Map.Int.set(page, status),
           )),
         )),
       })
-      let url =
-        `/api/${collection}/pages/${direction->directionAsString}/${page->Int.toString}.json`
+      let url = `/api/${collection}/pages/${direction}/${page->Int.toString}.json`
       let future =
         Request.make(~url, ~responseType=Text, ())
         ->Future.mapError(~propagateCancel=true, mapError)
@@ -172,8 +153,8 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
           ...context,
           lists: context.lists->Map.String.update(collection, collection => Some(
             collection
-            ->Option.getWithDefault(Map.make(~id=module(DirectionComparable)))
-            ->Map.update(direction, sortedCollection => Some(
+            ->Option.getWithDefault(Map.String.empty)
+            ->Map.String.update(direction, sortedCollection => Some(
               sortedCollection
               ->Option.getWithDefault(Map.Int.empty)
               ->Map.Int.set(page, Done(result)),
@@ -188,17 +169,16 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
 
   lists
   ->Map.String.get(collection)
-  ->Option.flatMap(collection => collection->Map.get(direction))
+  ->Option.flatMap(collection => collection->Map.String.get(direction))
   ->Option.flatMap(collection => collection->Map.Int.get(page))
   ->Option.getWithDefault(NotAsked)
 }
 
 let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
-  let ({items, itemsRequests} as context: Context.t, setContext) = React.useContext(Context.context)
-  context.itemsRequests =
-    itemsRequests->Map.String.update(collection, items => Some(
-      items->Option.getWithDefault(Set.String.empty)->Set.String.add(id),
-    ))
+  let ({items, itemsRequests}: Context.t, setContext) = React.useContext(Context.context)
+  itemsRequests->MutableMap.String.update(collection, items => Some(
+    items->Option.getWithDefault(Set.String.empty)->Set.String.add(id),
+  ))
 
   React.useEffect1(() => {
     switch items
@@ -258,12 +238,15 @@ type config = {
   publicDirectory: option<string>,
   getUrlsToPrerender: urlStore => array<string>,
   cname: option<string>,
+  paginateBy: int,
 }
 
 let start = app => {
   let root = ReactDOM.querySelector("#root")
   let initialData =
-    ReactDOM.querySelector("#data")->Option.map(textContent)->Option.map(Js.Json.deserializeUnsafe)
+    ReactDOM.querySelector("#initialData")
+    ->Option.map(textContent)
+    ->Option.map(Js.Json.deserializeUnsafe)
   switch (root, initialData) {
   | (Some(root), Some(initialData)) =>
     ReactDOM.hydrate(<Context value=initialData> app </Context>, root)
@@ -278,5 +261,5 @@ let make = (app, configs) => {
   if Js.typeof(window) != "undefined" {
     start(app)
   }
-  (app, configs)
+  (app, configs, Context.Provider.make)
 }
