@@ -148,6 +148,16 @@ external renderStatic: unit => {
   "title": string,
 } = "renderStatic"
 
+let renderRssItem = (config, item: listItem, url) =>
+  `<item>
+  <title><![CDATA[${item.title}]]></title>
+  <link>${join3(config.baseUrl, config.publicPath, url)}</link>
+  <guid isPermalink="false">${item.slug}</guid>
+  ${item.date
+  ->Option.map(date => `<pubDate>${date}</pubDate>`)
+  ->Option.getWithDefault("")}
+</item>`
+
 let getFiles = (app, contextComponent, config, webpackHtml) => {
   let collections = getCollections(config)
   let store =
@@ -315,28 +325,11 @@ let getFiles = (app, contextComponent, config, webpackHtml) => {
         sortedCollection->Map.Int.get(0)->Option.map(page => {
           acc->Map.String.set(
             `/api/${collectionName}/feeds/${direction}/feed.xml`,
-            ReactDOMServer.renderToString(
-              <rss version="2.0"> <channel> {page.items->Array.keepMap(item => {
-                    itemUsageMap->MutableMap.String.toArray->Array.getBy(((
-                      _,
-                      (collection, key),
-                    )) => {
-                      collection == collectionName && key == item.slug
-                    })->Option.map(((url, _)) =>
-                      <item>
-                        <title> {(`<![CDATA[${item.title}]]>`)->React.string} </title>
-                        <link> {join(config.publicPath, url)->React.string} </link>
-                        {React.cloneElement(
-                          <guid> {item.slug->React.string} </guid>,
-                          {"isPermalink": "false"},
-                        )}
-                        {item.date
-                        ->Option.map(date => <pubDate> {date->React.string} </pubDate>)
-                        ->Option.getWithDefault(React.null)}
-                      </item>
-                    )
-                  })->React.array} </channel> </rss>,
-            ),
+            page.items->Array.keepMap(item => {
+              itemUsageMap->MutableMap.String.toArray->Array.getBy(((_, (collection, key))) => {
+                collection == collectionName && key == item.slug
+              })->Option.map(((url, _)) => renderRssItem(config, item, url))
+            })->Js.Array2.joinWith("\n"),
           )
         })->Option.getWithDefault(acc)
       )
@@ -350,7 +343,7 @@ let getFiles = (app, contextComponent, config, webpackHtml) => {
    xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 ${prerenderedPages
       ->Map.String.keysToArray
-      ->Array.map(url => `<url><loc>${join(config.publicPath, url)}</loc></url>`)
+      ->Array.map(url => `<url><loc>${join3(config.baseUrl, config.publicPath, url)}</loc></url>`)
       ->Js.Array2.joinWith("")}
 </urlset>`,
     ),

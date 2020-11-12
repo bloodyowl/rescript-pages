@@ -233,6 +233,7 @@ type urlStore = {
 type config = {
   contentDirectory: string,
   distDirectory: string,
+  baseUrl: string,
   publicPath: string,
   localeFile: option<string>,
   publicDirectory: option<string>,

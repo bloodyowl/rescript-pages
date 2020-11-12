@@ -114,6 +114,7 @@ let default = StaticWebsite.make(
     {
       contentDirectory: "contents",
       distDirectory: "dist",
+      baseUrl: "https://bloodyowl.io",
       publicPath: "/",
       publicDirectory: None,
       localeFile: None,
@@ -132,6 +133,7 @@ let default = StaticWebsite.make(
     {
       contentDirectory: "contents",
       distDirectory: "dist/en",
+      baseUrl: "https://bloodyowl.io",
       publicPath: "/en",
       publicDirectory: None,
       localeFile: None,
