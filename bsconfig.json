@@ -24,7 +24,8 @@
     "rescript-asyncdata",
     "rescript-future",
     "rescript-request",
-    "bs-css-emotion"
+    "bs-css-emotion",
+    "bs-css"
   ],
   "warnings": {
     "error": "+101"

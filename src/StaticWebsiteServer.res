@@ -181,6 +181,7 @@ let getFiles = (app, contextComponent, config, webpackHtml) => {
       }
     })
 
+  let itemUsageMap = MutableMap.String.make()
   let prerenderedPages = config.getUrlsToPrerender({
     getAll: Store.getAll(store),
     getPages: Store.getPages(store),
@@ -267,9 +268,10 @@ let getFiles = (app, contextComponent, config, webpackHtml) => {
           context.items
           ->Map.String.get(collectionKey)
           ->Option.flatMap(pages => Some(
-            idsToRender->Set.String.reduce(Map.String.empty, (acc, key) =>
+            idsToRender->Set.String.reduce(Map.String.empty, (acc, key) => {
+              itemUsageMap->MutableMap.String.set(serverUrl, (collectionKey, key))
               acc->Map.String.update(key, _ => pages->Map.String.get(key))
-            ),
+            }),
           ))
         )
       ),
@@ -303,6 +305,56 @@ let getFiles = (app, contextComponent, config, webpackHtml) => {
         )
       )
     )
+  let feeds =
+    store.lists
+    ->Map.String.toArray
+    ->Array.reduce(Map.String.empty, (acc, (collectionName, collection)) =>
+      collection
+      ->Map.String.toArray
+      ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
+        sortedCollection->Map.Int.get(0)->Option.map(page => {
+          acc->Map.String.set(
+            `/api/${collectionName}/feeds/${direction}/feed.xml`,
+            ReactDOMServer.renderToString(
+              <rss version="2.0"> <channel> {page.items->Array.keepMap(item => {
+                    itemUsageMap->MutableMap.String.toArray->Array.getBy(((
+                      _,
+                      (collection, key),
+                    )) => {
+                      collection == collectionName && key == item.slug
+                    })->Option.map(((url, _)) =>
+                      <item>
+                        <title> {(`<![CDATA[${item.title}]]>`)->React.string} </title>
+                        <link> {join(config.publicPath, url)->React.string} </link>
+                        {React.cloneElement(
+                          <guid> {item.slug->React.string} </guid>,
+                          {"isPermalink": "false"},
+                        )}
+                        {item.date
+                        ->Option.map(date => <pubDate> {date->React.string} </pubDate>)
+                        ->Option.getWithDefault(React.null)}
+                      </item>
+                    )
+                  })->React.array} </channel> </rss>,
+            ),
+          )
+        })->Option.getWithDefault(acc)
+      )
+    )
+  let siteMap = [
+    (
+      "/sitemap.xml",
+      `<?xml version="1.0" encoding="utf-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+${prerenderedPages
+      ->Map.String.keysToArray
+      ->Array.map(url => `<url><loc>${join(config.publicPath, url)}</loc></url>`)
+      ->Js.Array2.joinWith("")}
+</urlset>`,
+    ),
+  ]
   let items =
     store.items
     ->Map.String.toArray
@@ -315,6 +367,13 @@ let getFiles = (app, contextComponent, config, webpackHtml) => {
     )
 
   prerenderedPages
-  ->Map.String.mergeMany(Array.concatMany([lists->Map.String.toArray, items->Map.String.toArray]))
+  ->Map.String.mergeMany(
+    Array.concatMany([
+      lists->Map.String.toArray,
+      items->Map.String.toArray,
+      feeds->Map.String.toArray,
+      siteMap,
+    ]),
+  )
   ->Map.String.toArray
 }

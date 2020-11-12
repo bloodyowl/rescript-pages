@@ -107,7 +107,7 @@ function prerenderForConfig(config, html) {
   )
     .forEach(([filePath, value]) => {
       filePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
-      filePath = filePath.startsWith("api/") || filePath.endsWith(".html") ? filePath : filePath + (filePath.endsWith("/") ? "" : "/") + "index.html"
+      filePath = filePath.startsWith("api/") || filePath.endsWith(".html") || filePath.endsWith(".xml") ? filePath : filePath + (filePath.endsWith("/") ? "" : "/") + "index.html"
       fs.mkdirSync(path.dirname(path.join(process.cwd(), config.distDirectory, filePath)), { recursive: true });
       fs.writeFileSync(path.join(process.cwd(), config.distDirectory, filePath), value, "utf8")
     })

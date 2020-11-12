@@ -15,7 +15,6 @@
     "bs-platform": "^8.0.0"
   },
   "dependencies": {
-    "@emotion/server": "^11.0.0",
     "bs-css-emotion": "^2.1.0",
     "bs-fetch": "^0.6.2",
     "chokidar": "^3.4.3",

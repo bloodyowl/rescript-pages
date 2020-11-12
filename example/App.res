@@ -2,15 +2,13 @@ open Belt
 open StaticWebsite
 
 module Styles = {
-  open Css
-  let title = style(list{color(blue)})
+  open CssJs
+  let title = style(.[textAlign(center), padding(40->px), fontSize(40->px)])
 }
 module Home = {
   @react.component
   let make = () => {
     <div>
-      <h1 className=Styles.title> {"Welcome to the home page"->React.string} </h1>
-      <br />
       <Link href="/post/foo"> {"View my super post >"->React.string} </Link>
       <br />
       <Link href="/posts"> {"View post list >"->React.string} </Link>
@@ -94,6 +92,9 @@ module App = {
         <meta name="description" value="My website" />
         <style> {"html { font-family: sans-serif }"->React.string} </style>
       </Head>
+      <Link href="/">
+        <h1 className=Styles.title> {"ReScript Static Website"->React.string} </h1>
+      </Link>
       {switch path {
       | list{} => <Home />
       | list{"post", post} => <Post post />
