@@ -4,7 +4,10 @@ open StaticWebsite
 module Home = {
   @react.component
   let make = () => {
-    <div />
+    <div>
+      {"Welcome to the home"->React.string}
+      <Link href="/post/foo"> {"View post"->React.string} </Link>
+    </div>
   }
 }
 
@@ -32,7 +35,14 @@ module Post = {
       {switch post {
       | NotAsked | Loading => "Loading..."->React.string
       | Done(Error(_)) => "Error"->React.string
-      | Done(Ok(post)) => <h1> <Title title=post.title /> {post.title->React.string} </h1>
+      | Done(Ok(post)) =>
+        <h1>
+          <Head>
+            <title> {post.title->React.string} </title>
+            <meta name="description" value={post.title} />
+          </Head>
+          {post.title->React.string}
+        </h1>
       }}
     </div>
   }
@@ -42,16 +52,19 @@ module App = {
   @react.component
   let make = (~serverUrl=?) => {
     let {path} = ReasonReactRouter.useUrl(~serverUrl?, ())
-
     <>
-      <Meta name="description" value="My website" />
+      <Head>
+        <title> {"My fancy website"->React.string} </title>
+        <meta name="description" value="My website" />
+      </Head>
       {switch path {
       | list{} => <Home />
       | list{"post", post} => <Post post />
       | list{"posts"} => <PostList page={1} />
       | list{"posts", page} => <PostList page={Int.fromString(page)->Option.getWithDefault(1)} />
+      | list{"404.html"} => <div> {"Page not found..."->React.string} </div>
       | list{page} => <Page page />
-      | _ => React.null
+      | _ => <div> {"Page not found..."->React.string} </div>
       }}
     </>
   }
@@ -64,7 +77,7 @@ let default = StaticWebsite.make(
       contentDirectory: "contents",
       distDirectory: "dist",
       publicPath: "/",
-      publicDirectory: Some("public"),
+      publicDirectory: None,
       localeFile: None,
       getUrlsToPrerender: ({getAll, getPages}) =>
         Array.concatMany([
@@ -72,6 +85,7 @@ let default = StaticWebsite.make(
           getAll("pages")->Array.map(slug => `/${slug}`),
           getAll("posts")->Array.map(slug => `/post/${slug}`),
           getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
+          ["404.html"],
         ]),
       cname: None,
     },

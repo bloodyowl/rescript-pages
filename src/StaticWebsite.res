@@ -11,11 +11,6 @@ let mapError = error =>
   | #Timeout => Timeout
   }
 
-type page = {
-  mutable title: option<string>,
-  meta: MutableMap.String.t<string>,
-}
-
 type listItem = {slug: string, title: string, date: option<string>, meta: Js.Dict.t<string>}
 
 type item = {
@@ -45,6 +40,25 @@ module DirectionComparable = Id.MakeComparable({
   let cmp = cmp
 })
 
+module Link = {
+  @react.component
+  let make = (~href, ~className=?, ~style=?, ~children) => {
+    <a
+      href
+      ?className
+      ?style
+      onClick={event => {
+        event->ReactEvent.Mouse.preventDefault
+        ReasonReactRouter.push(href)
+      }}>
+      children
+    </a>
+  }
+}
+
+@bs.get external getElementType: React.element => string = "type"
+@bs.get external getElementProps: React.element => Js.Dict.t<string> = "props"
+
 module Context = {
   type t = {
     lists: Map.String.t<
@@ -59,7 +73,6 @@ module Context = {
       Map.t<DirectionComparable.t, Set.Int.t, DirectionComparable.identity>,
     >,
     mutable itemsRequests: Map.String.t<Set.String.t>,
-    page: page,
   }
   type context = (t, (t => t) => unit)
   let default = {
@@ -67,7 +80,6 @@ module Context = {
     items: Map.String.empty,
     listsRequests: Map.String.empty,
     itemsRequests: Map.String.empty,
-    page: {title: None, meta: MutableMap.String.make()},
   }
   let defaultSetState: (t => t) => unit = _ => ()
   let context = React.createContext((default, defaultSetState))
@@ -82,57 +94,34 @@ module Context = {
     let make = context->React.Context.provider
   }
 
+  @bs.val external document: {..} = "document"
+
   @react.component
   let make = (~value: option<t>=?, ~children: React.element) => {
     let (value, setValue) = React.useState(() => value->Option.getWithDefault(default))
+
     <Provider value={(value, setValue)}> children </Provider>
   }
 }
 
-@bs.val external document: {..} = "document"
-
-let useTitle = (title: string) => {
-  let ({page}: Context.t, _) = React.useContext(Context.context)
-  page.title = Some(title)
-  React.useEffect1(() => {
-    document["title"] = title
-    None
-  }, [title])
-}
-
-module Title = {
-  @react.component
-  let make = (~title) => {
-    useTitle(title)
-    React.null
+let elementToIdentifier = element =>
+  switch element->getElementType {
+  | "title" => Some("title")
+  | "meta" =>
+    Some(
+      "meta:" ++
+      element->getElementProps->Js.Dict.get("name")->Option.getWithDefault("") ++
+      element->getElementProps->Js.Dict.get("property")->Option.getWithDefault("") ++
+      element->getElementProps->Js.Dict.get("charset")->Option.getWithDefault(""),
+    )
+  | "link" =>
+    Some("link:" ++ element->getElementProps->Js.Dict.get("rel")->Option.getWithDefault(""))
+  | _ => None
   }
-}
 
-let useMeta = (~attribute="name", name: string, value: string) => {
-  let ({page}: Context.t, _) = React.useContext(Context.context)
-  page.meta->MutableMap.String.set(`${attribute}="${name}"`, value)
-  React.useEffect1(() => {
-    let meta = switch document["querySelector"](
-      `meta[${attribute}="${name}"]`,
-    )->Js.Nullable.toOption {
-    | Some(meta) => meta
-    | None =>
-      let meta = document["createElement"]("meta")
-      let _ = meta["setAttribute"](attribute, name)
-      meta
-    }
-    meta["value"] = value
-    let _ = document["head"]["appendChild"](meta)
-    None
-  }, [attribute, name, value])
-}
-
-module Meta = {
-  @react.component
-  let make = (~name, ~attribute=?, ~value) => {
-    useMeta(~attribute?, name, value)
-    React.null
-  }
+module Head = {
+  @react.component @bs.module("react-helmet")
+  external make: (~children: React.element) => React.element = "Helmet"
 }
 
 let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
@@ -271,8 +260,6 @@ type config = {
   cname: option<string>,
 }
 
-type app = App(React.element, config)
-
 let start = app => {
   let root = ReactDOM.querySelector("#root")
   let initialData =
@@ -285,8 +272,7 @@ let start = app => {
   }
 }
 
-type window
-@bs.val external window: window = "window"
+@bs.val external window: {..} = "window"
 
 let make = (app, configs) => {
   if Js.typeof(window) != "undefined" {

@@ -136,7 +136,20 @@ module Store = {
   }
 }
 
-let getFiles = (App(app, config), getUrls: urlStore => array<string>) => {
+@bs.module("react-helmet") @bs.scope("Helmet")
+external renderStatic: unit => {
+  "base": string,
+  "bodyAttributes": string,
+  "htmlAttributes": string,
+  "link": string,
+  "meta": string,
+  "noscript": string,
+  "script": string,
+  "style": string,
+  "title": string,
+} = "renderStatic"
+
+let getFiles = (app, config, webpackHtml) => {
   let collections = getCollections(config)
 
   let store =
@@ -163,7 +176,7 @@ let getFiles = (App(app, config), getUrls: urlStore => array<string>) => {
       }
     })
 
-  let prerenderedPages = getUrls({
+  let prerenderedPages = config.getUrlsToPrerender({
     getAll: Store.getAll(store),
     getPages: Store.getPages(store),
   })
@@ -179,10 +192,6 @@ let getFiles = (App(app, config), getUrls: urlStore => array<string>) => {
       ),
       listsRequests: Map.String.empty,
       itemsRequests: Map.String.empty,
-      page: {
-        title: None,
-        meta: MutableMap.String.make(),
-      },
     }
     let html = ReactDOMServer.renderToString(
       <Context.Provider value={(context, _ => ())}>
@@ -194,9 +203,12 @@ let getFiles = (App(app, config), getUrls: urlStore => array<string>) => {
               | "" | "/" => list{}
               /* remove the preceeding /, which every pathname seems to have */
               | _ =>
-                let serverUrl = Js.String.sliceToEnd(~from=1, serverUrl)
+                let serverUrl =
+                  serverUrl->Js.String2.startsWith("/")
+                    ? serverUrl->Js.String2.sliceToEnd(~from=1)
+                    : serverUrl
                 /* remove the trailing /, which some pathnames might have. Ugh */
-                let serverUrl = switch Js.String.get(serverUrl, Js.String.length(serverUrl) - 1) {
+                let serverUrl = switch Js.String2.get(serverUrl, Js.String2.length(serverUrl) - 1) {
                 | "/" => Js.String.slice(~from=0, ~to_=-1, serverUrl)
                 | _ => serverUrl
                 }
@@ -252,27 +264,13 @@ let getFiles = (App(app, config), getUrls: urlStore => array<string>) => {
       ),
       listsRequests: Map.String.empty,
       itemsRequests: Map.String.empty,
-      page: {
-        title: None,
-        meta: MutableMap.String.make(),
-      },
     }
+    let initialData =
+      initialData->Js.Json.serializeExn->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)
+    let helmet = renderStatic()
     (
       serverUrl,
-      `<!DOCTYPE html>
-      <title>${context.page.title->Option.getWithDefault(
-        "",
-      )}</title>
-      ${context.page.meta
-      ->MutableMap.String.toArray
-      ->Array.map(((name, value)) => `<meta ${name} value="${value}" />`)
-      ->Array.reduce("", (acc, item) =>
-        acc ++ item
-      )}
-      <div id="root">${html}</div><script id="initialData">${initialData
-      ->Js.Json.serializeExn
-      ->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)}</script>
-      `,
+      `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}</head><div id="root">${html}</div><script id="initialData" type="text/data">${initialData}</script>${webpackHtml}${helmet["script"]}</html>`,
     )
   })
   ->Map.String.fromArray
@@ -288,7 +286,7 @@ let getFiles = (App(app, config), getUrls: urlStore => array<string>) => {
         ->Map.Int.toArray
         ->Array.reduce(acc, (acc, (page, items)) =>
           acc->Map.String.set(
-            `api/${collectionName}/pages/${direction->directionAsString}/${page->Int.toString}.json`,
+            `/api/${collectionName}/pages/${direction->directionAsString}/${page->Int.toString}.json`,
             items->Js.Json.serializeExn,
           )
         )
@@ -301,15 +299,11 @@ let getFiles = (App(app, config), getUrls: urlStore => array<string>) => {
       collection
       ->Map.String.toArray
       ->Array.reduce(acc, (acc, (id, item)) =>
-        acc->Map.String.set(`api/${collectionName}/items/${id}.json`, item->Js.Json.serializeExn)
+        acc->Map.String.set(`/api/${collectionName}/items/${id}.json`, item->Js.Json.serializeExn)
       )
     )
 
-  prerenderedPages->Map.String.mergeMany(
-    Array.concatMany([lists->Map.String.toArray, items->Map.String.toArray]),
-  )
-}
-
-let prerender = (app, getUrls) => {
-  getFiles(app, getUrls)->Js.log
+  prerenderedPages
+  ->Map.String.mergeMany(Array.concatMany([lists->Map.String.toArray, items->Map.String.toArray]))
+  ->Map.String.toArray
 }
