@@ -147,25 +147,21 @@ async function start() {
 
 async function build() {
   console.log("1/2 Bundling assets")
-  await Promise.all(
-    configs.map(config => {
-      return new Promise((resolve, reject) => {
-        let compiler = webpack(StaticWebsiteServer.getWebpackConfig(config, "production", entry))
-        compiler.run((error, stats) => {
-          if (error) {
-            reject(error);
-          } else {
-            if (stats.hasErrors()) {
-              let errors = stats.toJson().errors.join("\n");
-              reject(errors);
-            } else {
-              resolve()
-            }
-          }
-        })
-      })
+  await new Promise((resolve, reject) => {
+    let compiler = webpack(StaticWebsiteServer.getWebpackConfig(config, "production", entry))
+    compiler.run((error, stats) => {
+      if (error) {
+        reject(error);
+      } else {
+        if (stats.hasErrors()) {
+          let errors = stats.toJson().errors.join("\n");
+          reject(errors);
+        } else {
+          resolve()
+        }
+      }
     })
-  )
+  })
   console.log("2/2 Prerendering pages")
   prerenderForConfig(config)
   console.log("Done!")

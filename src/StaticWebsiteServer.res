@@ -60,14 +60,14 @@ let getCollectionItem = (slug, path) => {
   let item = {
     slug: slug,
     title: meta->Js.Dict.get("title")->Option.getWithDefault("Untitled"),
-    date: meta->Js.Dict.get("date"),
+    date: meta->Js.Dict.get("date")->Option.map(Js.Date.toUTCString),
     meta: meta,
     body: render(remarkable, parsed["body"]),
   }
   let listItem = {
     slug: slug,
     title: meta->Js.Dict.get("title")->Option.getWithDefault("Untitled"),
-    date: meta->Js.Dict.get("date"),
+    date: meta->Js.Dict.get("date")->Option.map(Js.Date.toUTCString),
     meta: meta,
   }
   (item, listItem)
@@ -154,33 +154,36 @@ let renderRssItem = (config, variant, item: listItem, url) => {
   | Some(subdir) => join3(config.baseUrl, subdir, url)
   | None => join(config.baseUrl, url)
   }
-  let date = item.date->Option.map(date => `<pubDate>${date}</pubDate>`)->Option.getWithDefault("")
-  `<item><title><![CDATA[${item.title}]]></title><link>${link}</link><guid isPermalink="false">${item.slug}</guid>${date}</item>`
+  let date = item.date->Option.map(date => `\n      <pubDate>${date}</pubDate>`)->Option.getWithDefault("")
+  `<item>
+      <title><![CDATA[${item.title}]]></title>
+      <link>${link}</link>
+      <guid isPermalink="false">${item.slug}</guid>${date}
+   </item>`
 }
 
 let wrapRssFeed = (config, feedUrl, items) => {
   `<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
-<channel>
-  <title><![CDATA[${config.siteTitle}]]></title>
-  <description><![CDATA[${config.siteDescription}]]></description>
-  <link>${config.baseUrl}</link>
-  <lastBuildDate>${Js.Date.make()->Js.Date.toUTCString}</lastBuildDate>
-  <atom:link href="${join(
+  <channel>
+    <title><![CDATA[${config.siteTitle}]]></title>
+    <description><![CDATA[${config.siteDescription}]]></description>
+    <link>${config.baseUrl}</link>
+    <lastBuildDate>${Js.Date.make()->Js.Date.toUTCString}</lastBuildDate>
+    <atom:link href="${join(
     config.baseUrl,
     feedUrl,
   )}" rel="self" type="application/rss+xml"/>
-  ${items}
-</channel>`
+    ${items}
+  </channel>
+</rss>`
 }
 
 let sitemap = urls => {
-  let urls = urls->Array.map(url => `<url><loc>${url}</loc></url>`)->Js.Array2.joinWith("")
+  let urls = urls->Array.map(url => `<url><loc>${url}</loc></url>`)->Js.Array2.joinWith("\n  ")
   `<?xml version="1.0" encoding="utf-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-${urls}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  ${urls}
 </urlset>`
 }
 
@@ -241,10 +244,12 @@ let getFiles = (config, readFileSync) => {
         getAll: Store.getAll(store),
         getPages: Store.getPages(store),
       })
-      ->Array.map(url => switch variant.subdirectory {
-      | Some(value) => join(value, url)
-      | None => url
-      })
+      ->Array.map(url =>
+        switch variant.subdirectory {
+        | Some(value) => join(value, url)
+        | None => url
+        }
+      )
       ->Array.map(serverUrl => {
         let context: Context.t = {
           lists: store.lists->Map.String.map(collection =>
@@ -373,14 +378,20 @@ let getFiles = (config, readFileSync) => {
           ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
             sortedCollection->Map.Int.get(0)->Option.map(page => {
               let url = `/api/${collectionName}/feeds/${direction}/feed.xml`
-              acc->Map.String.set(url, wrapRssFeed(config, url, page.items->Array.keepMap(item => {
+              acc->Map.String.set(
+                url,
+                {
+                  let items = page.items->Array.keepMap(item => {
                     itemUsageMap->MutableMap.String.toArray->Array.getBy(((
                       _,
                       (collection, key),
                     )) => {
                       collection == collectionName && key == item.slug
                     })->Option.map(((url, _)) => renderRssItem(config, variant, item, url))
-                  })->Js.Array2.joinWith("\n  ")))
+                  })->Js.Array2.joinWith("\n    ")
+                  wrapRssFeed(config, url, items)
+                },
+              )
             })->Option.getWithDefault(acc)
           )
         )
@@ -427,7 +438,7 @@ let getFiles = (config, readFileSync) => {
   })
 
   files
-  ->Map.String.set(join(config.distDirectory, "sitemap.xml"), sitemap(pages->Set.String.toArray))
+  ->Map.String.set("/sitemap.xml", sitemap(pages->Set.String.toArray))
   ->Map.String.toArray
   ->Array.map(((filePath, value)) => {
     let filePath =
