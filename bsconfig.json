@@ -23,7 +23,9 @@
     "reason-react",
     "rescript-asyncdata",
     "rescript-future",
-    "rescript-request"
+    "rescript-request",
+    "bs-css-emotion",
+    "bs-css"
   ],
   "warnings": {
     "error": "+101"
