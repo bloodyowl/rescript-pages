@@ -86,13 +86,17 @@ module App = {
   @react.component
   let make = (~serverUrl=?) => {
     let {path} = ReasonReactRouter.useUrl(~serverUrl?, ())
+    let (prefix, path) = switch path {
+    | list{"en", ...rest} => ("/en/", rest)
+    | rest => ("/", rest)
+    }
     <>
       <Head>
         <title> {"My fancy website"->React.string} </title>
         <meta name="description" value="My website" />
         <style> {"html { font-family: sans-serif }"->React.string} </style>
       </Head>
-      <Link href="/">
+      <Link href=prefix>
         <h1 className=Styles.title> {"ReScript Static Website"->React.string} </h1>
       </Link>
       {switch path {
@@ -110,44 +114,42 @@ module App = {
 
 let default = StaticWebsite.make(
   <App />,
-  [
-    {
-      contentDirectory: "contents",
-      distDirectory: "dist",
-      baseUrl: "https://bloodyowl.io",
-      publicPath: "/",
-      publicDirectory: None,
-      localeFile: None,
-      getUrlsToPrerender: ({getAll, getPages}) =>
-        Array.concatMany([
-          ["/"],
-          getAll("pages")->Array.map(slug => `/${slug}`),
-          getAll("posts")->Array.map(slug => `/post/${slug}`),
-          ["/posts"],
-          getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
-          ["404.html"],
-        ]),
-      cname: None,
-      paginateBy: 2,
-    },
-    {
-      contentDirectory: "contents",
-      distDirectory: "dist/en",
-      baseUrl: "https://bloodyowl.io",
-      publicPath: "/en",
-      publicDirectory: None,
-      localeFile: None,
-      getUrlsToPrerender: ({getAll, getPages}) =>
-        Array.concatMany([
-          ["/"],
-          getAll("pages")->Array.map(slug => `/${slug}`),
-          getAll("posts")->Array.map(slug => `/post/${slug}`),
-          ["/posts"],
-          getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
-          ["404.html"],
-        ]),
-      cname: None,
-      paginateBy: 2,
-    },
-  ],
+  {
+    siteTitle: "bloodyowl",
+    siteDescription: "My site",
+    distDirectory: "dist",
+    baseUrl: "https://bloodyowl.io",
+    staticsDirectory: Some("public"),
+    paginateBy: 2,
+    variants: [
+      {
+        subdirectory: None,
+        localeFile: None,
+        contentDirectory: "contents",
+        getUrlsToPrerender: ({getAll, getPages}) =>
+          Array.concatMany([
+            ["/"],
+            getAll("pages")->Array.map(slug => `/${slug}`),
+            getAll("posts")->Array.map(slug => `/post/${slug}`),
+            ["/posts"],
+            getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
+            ["404.html"],
+          ]),
+      },
+      {
+        subdirectory: Some("en"),
+        localeFile: None,
+        contentDirectory: "contents",
+        getUrlsToPrerender: ({getAll, getPages}) =>
+          Array.concatMany([
+            ["/"],
+            getAll("pages")->Array.map(slug => `/${slug}`),
+            getAll("posts")->Array.map(slug => `/post/${slug}`),
+            ["/posts"],
+            getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
+            ["404.html"],
+          ]),
+      },
+    ],
+  },
 )

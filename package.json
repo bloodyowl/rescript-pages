@@ -17,6 +17,7 @@
   "dependencies": {
     "bs-css-emotion": "^2.1.0",
     "bs-fetch": "^0.6.2",
+    "chalk": "^4.1.0",
     "chokidar": "^3.4.3",
     "copy-webpack-plugin": "^6.3.0",
     "emotion": "^10.0.7",

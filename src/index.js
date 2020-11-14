@@ -1,70 +1,14 @@
 let fs = require("fs");
 let path = require("path");
 let webpack = require("webpack");
-let HtmlWebpackPlugin = require("html-webpack-plugin");
-let CopyWebpackPlugin = require("copy-webpack-plugin");
-let InlineTranslationPlugin = require("inline-translations-webpack-plugin");
 let StaticWebsiteServer = require("./StaticWebsiteServer.bs");
+let chalk = require("chalk");
 
 let args = process.argv.slice(2)
 let command = args[0]
 let entry = args[1]
 
 global.__ = localeKey => localeKey
-
-function createWebpackConfig(config) {
-  let clientConfig = {
-    entry: path.join(process.cwd(), entry),
-    mode: command == "build" ? "production" : "development",
-    devtool: false,
-    output: {
-      path: path.join(process.cwd(), config.distDirectory),
-      publicPath: config.publicPath,
-      filename: `public/[name].[hash].js`,
-      chunkFilename: `public/chunks/[contenthash].js`,
-      globalObject: "this",
-      jsonpFunction: "staticWebsite__d"
-    },
-    plugins: [
-      new HtmlWebpackPlugin({
-        filename: `_source.html`,
-        templateContent: "",
-      }),
-      new InlineTranslationPlugin(config.localeFile ? require(path.join(process.cwd(), config.localeFile)) : null)
-    ]
-      .concat(
-        config.publicDirectory ? [new CopyWebpackPlugin({
-          patterns: [
-            { from: "**/*", to: `public`, context: path.join(process.cwd(), config.publicDirectory) },
-          ]
-        })] : []
-      )
-  };
-  return [
-    clientConfig,
-    {
-      entry: path.join(process.cwd(), entry),
-      mode: "development",
-      devtool: false,
-      target: "node",
-      output: {
-        libraryTarget: "commonjs2",
-        path: path.join(process.cwd(), config.distDirectory),
-        publicPath: config.publicPath,
-        filename: `_entry.js`,
-        chunkFilename: `public/chunks/[contenthash].js`,
-      },
-      externals: {
-        'react': 'commonjs2 react',
-        'react-dom': 'commonjs2 react-dom',
-        'react-dom-server': 'commonjs2 react-dom-server',
-        'react-helmet': 'commonjs2 react-helmet',
-        'bs-platform': 'commonjs2 bs-platform',
-        'emotion': 'commonjs2 emotion',
-      }
-    },
-  ]
-}
 
 function createWebsocketServer(port) {
   let WebSocket = require("ws");
@@ -90,30 +34,15 @@ function requireFresh(path) {
   return require(path)
 }
 
-function prerenderForConfig(config, html) {
-  let entry = requireFresh(path.join(process.cwd(), config.distDirectory, "_entry.js"))
-  if (entry.default == undefined) {
-    // multiple build occuring, wait for the next one
-    return
-  }
-  let reactApp = entry.default[0]
-  let Context = entry.default[2]
-
-  StaticWebsiteServer.getFiles(
-    reactApp,
-    Context,
-    config,
-    html
-  )
+function prerenderForConfig(config) {
+  StaticWebsiteServer.getFiles(config, fs.readFileSync)
     .forEach(([filePath, value]) => {
-      filePath = filePath.startsWith("/") ? filePath.slice(1) : filePath
-      filePath = filePath.startsWith("api/") || filePath.endsWith(".html") || filePath.endsWith(".xml") ? filePath : filePath + (filePath.endsWith("/") ? "" : "/") + "index.html"
       fs.mkdirSync(path.dirname(path.join(process.cwd(), config.distDirectory, filePath)), { recursive: true });
       fs.writeFileSync(path.join(process.cwd(), config.distDirectory, filePath), value, "utf8")
     })
 }
 
-let { default: [_, configs] } = require(path.join(process.cwd(), entry))
+let { default: { config } } = require(path.join(process.cwd(), entry))
 
 async function start() {
   let express = require("express")
@@ -122,15 +51,14 @@ async function start() {
   let { createFsFromVolume, Volume } = require("memfs");
   let volume = new Volume();
   let outputFileSystem = createFsFromVolume(volume);
+  // rewrite `fs` from now on
   fs = outputFileSystem
   outputFileSystem.join = path.join.bind(path);
 
-  let compiler = webpack(configs.reduce((acc, config) => {
-    acc.push(...createWebpackConfig(config))
-    return acc
-  }, []))
+  let compiler = webpack(StaticWebsiteServer.getWebpackConfig(config, "development", entry))
+  // patch web compilers to write on memory
   compiler.compilers.forEach(compiler => {
-    if (compiler.options.output.filename != "_entry.js") {
+    if (compiler.options.target == "web") {
       compiler.outputFileSystem = outputFileSystem;
     }
   })
@@ -142,6 +70,7 @@ async function start() {
 
   let isFirstRun = true
 
+  console.log("Bundling assets")
   await new Promise((resolve, reject) =>
     compiler.watch({
       aggregateTimeout: 300,
@@ -156,19 +85,13 @@ async function start() {
         } else {
           resolve()
           // reload config
-          let entry = requireFresh(path.join(process.cwd(), configs[0].distDirectory, "_entry.js"))
-          if (entry.default == undefined) {
+          let entryExports = requireFresh(path.join(process.cwd(), entry))
+          if (entryExports.default == undefined) {
             // multiple build occuring, wait for the next one
             return
           }
-          let htmlSources = stats.stats.map(item => item.compilation.assets["_source.html"] ? item.compilation.assets["_source.html"].source() : null).filter(x => x)
-          configs = entry.default[1]
-          configs.forEach((config, index) => {
-            prerenderForConfig(
-              config,
-              (htmlSources[index] || fs.readFileSync(path.join(process.cwd(), "dist/_source.html"), "utf8")) + suffix
-            )
-          })
+          config = entryExports.default.config
+          prerenderForConfig(config)
           if (!isFirstRun) {
             ws.send("change")
           }
@@ -180,21 +103,17 @@ async function start() {
 
   let chokidar = require("chokidar");
 
-  configs.forEach(config => {
-    let watcher = chokidar.watch(path.join(process.cwd(), config.contentDirectory), {
-      ignored: /^\./, persistent: true,
-      ignoreInitial: true,
-    });
+  let watcher = chokidar.watch(path.join(process.cwd()), {
+    ignored: /^\./, persistent: true,
+    ignoreInitial: true,
+  });
 
-    watcher
-      .on("all", function (_) {
-        prerenderForConfig(
-          config,
-          fs.readFileSync(path.join(process.cwd(), "dist/_source.html"), "utf8") + suffix
-        )
-        ws.send("change")
-      })
-  })
+  watcher
+    .on("all", function (_) {
+      console.log("Content changed")
+      prerenderForConfig(config)
+      ws.send("change")
+    })
 
   app.use((req, res, next) => {
     let url = req.path;
@@ -208,9 +127,10 @@ async function start() {
           let stat = fs.statSync(pathToTry)
           if (stat.isFile()) {
             returned = true
+            let wsSuffix = (pathToTry.endsWith(".html") ? suffix : "");
             fs.readFile(pathToTry, (err, data) => {
               if (err) { } else {
-                res.status(200).end(data);
+                res.status(200).end(data + wsSuffix);
               }
             })
           }
@@ -222,17 +142,15 @@ async function start() {
     }
   });
   app.listen(8094)
-  console.log("http://localhost:8094")
+  console.log("Dev server running at: http://localhost:8094")
 }
 
 async function build() {
+  console.log("1/2 Bundling assets")
   await Promise.all(
     configs.map(config => {
       return new Promise((resolve, reject) => {
-        let compiler = webpack(configs.reduce((acc, config) => {
-          acc.push(...createWebpackConfig(config))
-          return acc
-        }, []))
+        let compiler = webpack(StaticWebsiteServer.getWebpackConfig(config, "production", entry))
         compiler.run((error, stats) => {
           if (error) {
             reject(error);
@@ -248,15 +166,13 @@ async function build() {
       })
     })
   )
-
-  configs.forEach(config =>
-    prerenderForConfig(
-      config,
-      fs.readFileSync(path.join(process.cwd(), "dist/_source.html"), "utf8")
-    ))
-
+  console.log("2/2 Prerendering pages")
+  prerenderForConfig(config)
+  console.log("Done!")
 }
 
+
+console.log(chalk.blue("ReScript Static Website"))
 if (command == "start") {
   start()
 } else {

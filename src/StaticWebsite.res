@@ -230,16 +230,21 @@ type urlStore = {
   getPages: string => array<int>,
 }
 
-type config = {
+type variant = {
+  subdirectory: option<string>,
+  localeFile: option<string>,
   contentDirectory: string,
+  getUrlsToPrerender: urlStore => array<string>,
+}
+
+type config = {
+  siteTitle: string,
+  siteDescription: string,
   distDirectory: string,
   baseUrl: string,
-  publicPath: string,
-  localeFile: option<string>,
-  publicDirectory: option<string>,
-  getUrlsToPrerender: urlStore => array<string>,
-  cname: option<string>,
+  staticsDirectory: option<string>,
   paginateBy: int,
+  variants: array<variant>,
 }
 
 let start = app => {
@@ -258,9 +263,15 @@ let start = app => {
 
 @bs.val external window: {..} = "window"
 
-let make = (app, configs) => {
+type app = {
+  app: React.element,
+  config: config,
+  provider: React.component<{"value": Context.context, "children": React.element}>,
+}
+
+let make = (app, config) => {
   if Js.typeof(window) != "undefined" {
     start(app)
   }
-  (app, configs, Context.Provider.make)
+  {app: app, config: config, provider: Context.Provider.make}
 }
