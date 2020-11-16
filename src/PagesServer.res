@@ -506,8 +506,8 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "plugins": [
           definePlugin({
             "process.env.PAGES_PATH": switch variant.subdirectory {
-            | Some(subdir) => join(url(config.baseUrl).pathname, subdir)
-            | None => url(config.baseUrl).pathname
+            | Some(subdir) => `"${join(url(config.baseUrl).pathname, subdir)}"`
+            | None => `"${url(config.baseUrl).pathname}"`
             },
           }),
         ],
@@ -546,8 +546,8 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "plugins": [
           definePlugin({
             "process.env.PAGES_PATH": switch variant.subdirectory {
-            | Some(subdir) => join(url(config.baseUrl).pathname, subdir)
-            | None => url(config.baseUrl).pathname
+            | Some(subdir) => `"${join(url(config.baseUrl).pathname, subdir)}"`
+            | None => `"${url(config.baseUrl).pathname}"`
             },
           }),
           htmlPlugin({
