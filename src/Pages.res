@@ -248,8 +248,17 @@ let start = (app, config) => {
     ->Option.map(Js.Json.deserializeUnsafe)
   switch (root, initialData) {
   | (Some(root), Some(initialData)) =>
-    ReactDOM.hydrate(<Context config value=initialData> app </Context>, root)
-  | (Some(root), None) => ReactDOM.render(<Context config> app </Context>, root)
+    ReactDOM.hydrate(
+      <Context config value=initialData>
+        {React.createElement(app, {"serverUrl": None, "config": config})}
+      </Context>,
+      root,
+    )
+  | (Some(root), None) =>
+    ReactDOM.render(
+      <Context config> {React.createElement(app, {"serverUrl": None, "config": config})} </Context>,
+      root,
+    )
   | (None, _) => Js.Console.error(`Can't find the app's root container`)
   }
 }
@@ -257,7 +266,7 @@ let start = (app, config) => {
 @bs.val external window: {..} = "window"
 
 type app = {
-  app: React.element,
+  app: React.component<{"config": config, "serverUrl": option<ReasonReactRouter.url>}>,
   config: config,
   provider: React.component<{
     "config": config,

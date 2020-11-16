@@ -25,7 +25,7 @@ Create an entry file with a `default` export with your configuration:
 
 ```rescript
 let default = Pages.make(
-  <App />,
+  App.make,
   {
     siteTitle: "Title",
     siteDescription: "Description",

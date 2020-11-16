@@ -277,6 +277,27 @@ let getFiles = (config, readFileSync, mode) => {
           listsRequests: MutableMap.String.make(),
           itemsRequests: MutableMap.String.make(),
         }
+        let path = switch serverUrl {
+        | "" | "/" => list{}
+        /* remove the preceeding /, which every pathname seems to have */
+        | _ =>
+          let serverUrl =
+            serverUrl->Js.String2.startsWith("/")
+              ? serverUrl->Js.String2.sliceToEnd(~from=1)
+              : serverUrl
+          /* remove the trailing /, which some pathnames might have. Ugh */
+          let serverUrl = switch Js.String2.get(serverUrl, Js.String2.length(serverUrl) - 1) {
+          | "/" => Js.String.slice(~from=0, ~to_=-1, serverUrl)
+          | _ => serverUrl
+          }
+          serverUrl->Js.String2.split("/")->List.fromArray
+        }
+        let url: ReasonReactRouter.url = {
+          path: path,
+          hash: "",
+          search: "",
+        }
+
         let html = renderStylesToString(
           ReactDOMServer.renderToString({
             React.createElement(
@@ -284,34 +305,11 @@ let getFiles = (config, readFileSync, mode) => {
               {
                 "value": Some(context),
                 "config": config,
-                "children": React.cloneElement(
+                "children": React.createElement(
                   app,
                   {
-                    "serverUrl": {
-                      let path = switch serverUrl {
-                      | "" | "/" => list{}
-                      /* remove the preceeding /, which every pathname seems to have */
-                      | _ =>
-                        let serverUrl =
-                          serverUrl->Js.String2.startsWith("/")
-                            ? serverUrl->Js.String2.sliceToEnd(~from=1)
-                            : serverUrl
-                        /* remove the trailing /, which some pathnames might have. Ugh */
-                        let serverUrl = switch Js.String2.get(
-                          serverUrl,
-                          Js.String2.length(serverUrl) - 1,
-                        ) {
-                        | "/" => Js.String.slice(~from=0, ~to_=-1, serverUrl)
-                        | _ => serverUrl
-                        }
-                        serverUrl->Js.String2.split("/")->List.fromArray
-                      }
-                      {
-                        path: path,
-                        hash: "",
-                        search: "",
-                      }
-                    },
+                    "config": config,
+                    "serverUrl": Some(url),
                   },
                 ),
               },

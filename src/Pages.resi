@@ -86,7 +86,7 @@ let useCollection: (
 let useItem: (string, ~id: string) => AsyncData.t<result<item, error>>
 
 type app = {
-  app: React.element,
+  app: React.component<{"config": config, "serverUrl": option<ReasonReactRouter.url>}>,
   config: config,
   provider: React.component<{
     "value": option<Context.t>,
@@ -95,4 +95,7 @@ type app = {
   }>,
 }
 
-let make: (React.element, config) => app
+let make: (
+  React.component<{"config": config, "serverUrl": option<ReasonReactRouter.url>}>,
+  config,
+) => app

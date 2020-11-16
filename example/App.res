@@ -85,7 +85,7 @@ module Post = {
 
 module App = {
   @react.component
-  let make = (~serverUrl=?) => {
+  let make = (~serverUrl=?, ~config as _) => {
     let {path} = ReasonReactRouter.useUrl(~serverUrl?, ())
     let (prefix, path) = switch path {
     | list{"en", ...rest} => ("/en/", rest)
@@ -120,7 +120,7 @@ let getUrlsToPrerender = ({Pages.getAll: getAll, getPages}) =>
   ])
 
 let default = Pages.make(
-  <App />,
+  App.make,
   {
     siteTitle: "bloodyowl",
     siteDescription: "My site",
