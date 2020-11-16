@@ -1,3 +1,9 @@
+## 0.1.4
+
+Fixes:
+
+- Properly export helmet (6bd02e8)
+
 ## 0.1.3
 
 Features:
