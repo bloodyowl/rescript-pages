@@ -1,5 +1,27 @@
 open Belt
 
+type urlStore = {
+  getAll: string => array<string>,
+  getPages: string => array<int>,
+}
+
+type variant = {
+  subdirectory: option<string>,
+  localeFile: option<string>,
+  contentDirectory: string,
+  getUrlsToPrerender: urlStore => array<string>,
+}
+
+type config = {
+  siteTitle: string,
+  siteDescription: string,
+  distDirectory: string,
+  baseUrl: string,
+  staticsDirectory: option<string>,
+  paginateBy: int,
+  variants: array<variant>,
+}
+
 type error =
   | EmptyResponse
   | Timeout
@@ -53,6 +75,11 @@ module Link = {
   }
 }
 
+module Head = {
+  @react.component @bs.module("react-helmet")
+  external make: (~children: React.element) => React.element = "Helmet"
+}
+
 module Context = {
   type t = {
     lists: Map.String.t<Map.String.t<Map.Int.t<AsyncData.t<result<paginated<listItem>, error>>>>>,
@@ -81,16 +108,17 @@ module Context = {
   }
 
   @react.component
-  let make = (~value: option<t>=?, ~children: React.element) => {
+  let make = (~value: option<t>=?, ~config, ~children: React.element) => {
     let (value, setValue) = React.useState(() => value->Option.getWithDefault(default))
 
-    <Provider value={(value, setValue)}> children </Provider>
+    <>
+      <Head>
+        <title> {config.siteTitle->React.string} </title>
+        <meta name="description" value=config.siteDescription />
+      </Head>
+      <Provider value={(value, setValue)}> children </Provider>
+    </>
   }
-}
-
-module Head = {
-  @react.component @bs.module("react-helmet")
-  external make: (~children: React.element) => React.element = "Helmet"
 }
 
 let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
@@ -212,29 +240,7 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
 
 @bs.get external textContent: Dom.element => string = "textContent"
 
-type urlStore = {
-  getAll: string => array<string>,
-  getPages: string => array<int>,
-}
-
-type variant = {
-  subdirectory: option<string>,
-  localeFile: option<string>,
-  contentDirectory: string,
-  getUrlsToPrerender: urlStore => array<string>,
-}
-
-type config = {
-  siteTitle: string,
-  siteDescription: string,
-  distDirectory: string,
-  baseUrl: string,
-  staticsDirectory: option<string>,
-  paginateBy: int,
-  variants: array<variant>,
-}
-
-let start = app => {
+let start = (app, config) => {
   let root = ReactDOM.querySelector("#root")
   let initialData =
     ReactDOM.querySelector("#initialData")
@@ -242,8 +248,8 @@ let start = app => {
     ->Option.map(Js.Json.deserializeUnsafe)
   switch (root, initialData) {
   | (Some(root), Some(initialData)) =>
-    ReactDOM.hydrate(<Context value=initialData> app </Context>, root)
-  | (Some(root), None) => ReactDOM.render(<Context> app </Context>, root)
+    ReactDOM.hydrate(<Context config value=initialData> app </Context>, root)
+  | (Some(root), None) => ReactDOM.render(<Context config> app </Context>, root)
   | (None, _) => Js.Console.error(`Can't find the app's root container`)
   }
 }
@@ -253,12 +259,16 @@ let start = app => {
 type app = {
   app: React.element,
   config: config,
-  provider: React.component<{"value": Context.context, "children": React.element}>,
+  provider: React.component<{
+    "config": config,
+    "value": option<Context.t>,
+    "children": React.element,
+  }>,
 }
 
 let make = (app, config) => {
   if Js.typeof(window) != "undefined" {
-    start(app)
+    start(app, config)
   }
-  {app: app, config: config, provider: Context.Provider.make}
+  {app: app, config: config, provider: Context.make}
 }

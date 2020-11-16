@@ -282,7 +282,8 @@ let getFiles = (config, readFileSync, mode) => {
             React.createElement(
               provider,
               {
-                "value": (context, _ => ()),
+                "value": Some(context),
+                "config": config,
                 "children": React.cloneElement(
                   app,
                   {

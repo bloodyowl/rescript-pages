@@ -1,3 +1,25 @@
+type urlStore = {
+  getAll: string => array<string>,
+  getPages: string => array<int>,
+}
+
+type variant = {
+  subdirectory: option<string>,
+  localeFile: option<string>,
+  contentDirectory: string,
+  getUrlsToPrerender: urlStore => array<string>,
+}
+
+type config = {
+  siteTitle: string,
+  siteDescription: string,
+  distDirectory: string,
+  baseUrl: string,
+  staticsDirectory: option<string>,
+  paginateBy: int,
+  variants: array<variant>,
+}
+
 type error =
   | EmptyResponse
   | Timeout
@@ -63,32 +85,14 @@ let useCollection: (
 
 let useItem: (string, ~id: string) => AsyncData.t<result<item, error>>
 
-type urlStore = {
-  getAll: string => array<string>,
-  getPages: string => array<int>,
-}
-
-type variant = {
-  subdirectory: option<string>,
-  localeFile: option<string>,
-  contentDirectory: string,
-  getUrlsToPrerender: urlStore => array<string>,
-}
-
-type config = {
-  siteTitle: string,
-  siteDescription: string,
-  distDirectory: string,
-  baseUrl: string,
-  staticsDirectory: option<string>,
-  paginateBy: int,
-  variants: array<variant>,
-}
-
 type app = {
   app: React.element,
   config: config,
-  provider: React.component<{"value": Context.context, "children": React.element}>,
+  provider: React.component<{
+    "value": option<Context.t>,
+    "config": config,
+    "children": React.element,
+  }>,
 }
 
 let make: (React.element, config) => app

@@ -92,11 +92,7 @@ module App = {
     | rest => ("/", rest)
     }
     <>
-      <Pages.Head>
-        <title> {"My fancy website"->React.string} </title>
-        <meta name="description" value="My website" />
-        <style> {"html { font-family: sans-serif }"->React.string} </style>
-      </Pages.Head>
+      <Pages.Head> <style> {"html { font-family: sans-serif }"->React.string} </style> </Pages.Head>
       <Pages.Link href=prefix>
         <h1 className=Styles.title> {"ReScript Pages"->React.string} </h1>
       </Pages.Link>
