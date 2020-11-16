@@ -1,3 +1,9 @@
+## 0.1.6
+
+Fixes:
+
+- Fix definition (6245aca)
+
 ## 0.1.5
 
 Fixes:

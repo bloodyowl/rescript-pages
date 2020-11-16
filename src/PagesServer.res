@@ -197,6 +197,13 @@ let requireFresh = path => {
   require(path)
 }
 
+type url = {pathname: string}
+@bs.new external nodeUrl: string => url = "URL"
+
+type processEnv
+@bs.val external processEnv: processEnv = "process.env"
+@bs.set external setPagesPath: (processEnv, string) => unit = "PAGES_PATH"
+
 let getFiles = (config, readFileSync, mode) => {
   let (files, pages) = config.variants->Array.reduce((Map.String.empty, Set.String.empty), ((
     map,
@@ -299,6 +306,13 @@ let getFiles = (config, readFileSync, mode) => {
           search: "",
         }
 
+        setPagesPath(
+          processEnv,
+          switch variant.subdirectory {
+          | Some(subdir) => join(nodeUrl(config.baseUrl).pathname, subdir)
+          | None => nodeUrl(config.baseUrl).pathname
+          },
+        )
         let html = renderStylesToString(
           ReactDOMServer.renderToString({
             React.createElement(
@@ -463,9 +477,6 @@ let getFiles = (config, readFileSync, mode) => {
   })
 }
 
-type url = {pathname: string}
-@bs.new external url: string => url = "URL"
-
 type plugin
 @bs.new @bs.module external htmlPlugin: {..} => plugin = "html-webpack-plugin"
 @bs.new @bs.module
@@ -496,8 +507,8 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           | None => join(cwd(), config.distDirectory)
           },
           "publicPath": switch variant.subdirectory {
-          | Some(subdir) => join(url(config.baseUrl).pathname, subdir)
-          | None => url(config.baseUrl).pathname
+          | Some(subdir) => join(nodeUrl(config.baseUrl).pathname, subdir)
+          | None => nodeUrl(config.baseUrl).pathname
           },
           "filename": `_entry.js`,
           "chunkFilename": `public/chunks/[contenthash].js`,
@@ -506,8 +517,8 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "plugins": [
           definePlugin({
             "process.env.PAGES_PATH": switch variant.subdirectory {
-            | Some(subdir) => `"${join(url(config.baseUrl).pathname, subdir)}"`
-            | None => `"${url(config.baseUrl).pathname}"`
+            | Some(subdir) => `"${join(nodeUrl(config.baseUrl).pathname, subdir)}"`
+            | None => `"${nodeUrl(config.baseUrl).pathname}"`
             },
           }),
         ],
@@ -515,7 +526,7 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           ("react", "commonjs2 react"),
           ("react-dom", "commonjs2 react-dom"),
           ("react-dom-server", "commonjs2 react-dom-server"),
-          ("react-helmet", "commonjs2 react-helmet"),
+          ("react-helmet", `commonjs2 react-helmet`),
           ("bs-platform", "commonjs2 bs-platform"),
           ("emotion", "commonjs2 emotion"),
         ]),
@@ -535,8 +546,8 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           | None => join(cwd(), config.distDirectory)
           },
           "publicPath": switch variant.subdirectory {
-          | Some(subdir) => join(url(config.baseUrl).pathname, subdir)
-          | None => url(config.baseUrl).pathname
+          | Some(subdir) => join(nodeUrl(config.baseUrl).pathname, subdir)
+          | None => nodeUrl(config.baseUrl).pathname
           },
           "filename": `public/[name].[hash].js`,
           "chunkFilename": `public/chunks/[contenthash].js`,
@@ -546,8 +557,8 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "plugins": [
           definePlugin({
             "process.env.PAGES_PATH": switch variant.subdirectory {
-            | Some(subdir) => `"${join(url(config.baseUrl).pathname, subdir)}"`
-            | None => `"${url(config.baseUrl).pathname}"`
+            | Some(subdir) => `"${join(nodeUrl(config.baseUrl).pathname, subdir)}"`
+            | None => `"${nodeUrl(config.baseUrl).pathname}"`
             },
           }),
           htmlPlugin({
