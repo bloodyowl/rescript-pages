@@ -113,6 +113,16 @@ module App = {
   }
 }
 
+let getUrlsToPrerender = ({Pages.getAll: getAll, getPages}) =>
+  Array.concatMany([
+    ["/"],
+    getAll("pages")->Array.map(slug => `/${slug}`),
+    getAll("posts")->Array.map(slug => `/post/${slug}`),
+    ["/posts"],
+    getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
+    ["404.html"],
+  ])
+
 let default = Pages.make(
   <App />,
   {
@@ -127,29 +137,13 @@ let default = Pages.make(
         subdirectory: None,
         localeFile: None,
         contentDirectory: "contents",
-        getUrlsToPrerender: ({getAll, getPages}) =>
-          Array.concatMany([
-            ["/"],
-            getAll("pages")->Array.map(slug => `/${slug}`),
-            getAll("posts")->Array.map(slug => `/post/${slug}`),
-            ["/posts"],
-            getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
-            ["404.html"],
-          ]),
+        getUrlsToPrerender: getUrlsToPrerender,
       },
       {
         subdirectory: Some("en"),
         localeFile: None,
         contentDirectory: "contents",
-        getUrlsToPrerender: ({getAll, getPages}) =>
-          Array.concatMany([
-            ["/"],
-            getAll("pages")->Array.map(slug => `/${slug}`),
-            getAll("posts")->Array.map(slug => `/post/${slug}`),
-            ["/posts"],
-            getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
-            ["404.html"],
-          ]),
+        getUrlsToPrerender: getUrlsToPrerender,
       },
     ],
   },
