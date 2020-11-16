@@ -1,3 +1,9 @@
+## 0.1.2
+
+Features:
+
+- Delay env var reading (e92a984)
+
 ## 0.1.1
 
 Features:
