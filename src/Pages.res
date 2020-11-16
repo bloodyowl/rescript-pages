@@ -99,7 +99,6 @@ let pathParse = str =>
   }
 
 @bs.val external pagesPath: string = "process.env.PAGES_PATH"
-let pagesPathList = pathParse(pagesPath)
 
 let rec stripInitialPath = (path, sourcePath) => {
   switch (path, sourcePath) {
@@ -111,7 +110,7 @@ let rec stripInitialPath = (path, sourcePath) => {
 let useUrl = () => {
   let serverUrl = React.useContext(ServerUrlContext.context)
   let {path} as url = ReasonReactRouter.useUrl(~serverUrl?, ())
-  {...url, path: stripInitialPath(path, pagesPathList)}
+  {...url, path: stripInitialPath(path, pathParse(pagesPath))}
 }
 
 module Link = {
@@ -131,7 +130,7 @@ module Link = {
       ? Js.String.startsWith(href, path ++ "/") || Js.String.startsWith(href, path)
       : path === href || path ++ "/" === href
     <a
-      href={`${pagesPath}${href}`}
+      href={pagesPath ++ href}
       className={CssJs.merge(.
         [className, isActive ? activeClassName : None]->Array.keepMap(x => x),
       )}
