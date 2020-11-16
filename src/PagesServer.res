@@ -9,6 +9,7 @@ type dirent
 @bs.module("fs") external readFileSync: (string, @bs.as("utf8") _) => string = "readFileSync"
 @bs.val external cwd: unit => string = "process.cwd"
 @bs.module("path") external join: (string, string) => string = "join"
+@bs.module("path") external resolve: (string, string) => string = "resolve"
 @bs.module("path") external join3: (string, string, string) => string = "join"
 @bs.module("path") external basename: (string, string) => string = "basename"
 @bs.module("path") external extname: string => string = "extname"
@@ -475,6 +476,8 @@ external inlineTranslationPlugin: Js.Null.t<Js.Json.t> => plugin =
 
 type mode = [#development | #production]
 
+@bs.val external dirname: string = "__dirname"
+
 let getWebpackConfig = (config, mode: mode, entry) => {
   config.variants->Array.reduce([], (acc, variant) => {
     acc->Array.concat([
@@ -483,6 +486,9 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "mode": mode,
         "devtool": false,
         "target": "node",
+        "resolve": {
+          "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
+        },
         "output": {
           "libraryTarget": Js.Undefined.return("commonjs2"),
           "path": switch variant.subdirectory {
@@ -519,6 +525,9 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "mode": mode,
         "devtool": false,
         "target": "web",
+        "resolve": {
+          "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
+        },
         "output": {
           "libraryTarget": Js.Undefined.empty,
           "path": switch variant.subdirectory {
