@@ -1,5 +1,5 @@
 {
-  "name": "static-website",
+  "name": "rescript-pages",
   "version": "0.1.0",
   "scripts": {
     "clean": "bsb -clean-world",
