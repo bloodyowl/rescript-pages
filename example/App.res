@@ -1,5 +1,4 @@
 open Belt
-open StaticWebsite
 
 module Styles = {
   open CssJs
@@ -9,9 +8,9 @@ module Home = {
   @react.component
   let make = () => {
     <div>
-      <Link href="/post/foo"> {"View my super post >"->React.string} </Link>
+      <Pages.Link href="/post/foo"> {"View my super post >"->React.string} </Pages.Link>
       <br />
-      <Link href="/posts"> {"View post list >"->React.string} </Link>
+      <Pages.Link href="/posts"> {"View post list >"->React.string} </Pages.Link>
     </div>
   }
 }
@@ -19,29 +18,31 @@ module Home = {
 module PostList = {
   @react.component
   let make = (~page=1) => {
-    let posts = useCollection("posts", ~page)
+    let posts = Pages.useCollection("posts", ~page)
     <>
       {switch posts {
       | NotAsked | Loading => "Loading..."->React.string
       | Done(Error(_)) => "Error"->React.string
       | Done(Ok({items, hasPreviousPage, hasNextPage})) => <>
           <h1>
-            <Head>
+            <Pages.Head>
               <title> {(`Posts, page ${page->Int.toString} - my website`)->React.string} </title>
-            </Head>
+            </Pages.Head>
           </h1>
           <ul> {items->Array.map(item => {
               <li key=item.slug>
-                <Link href={`/post/${item.slug}`}> {item.title->React.string} </Link>
+                <Pages.Link href={`/post/${item.slug}`}> {item.title->React.string} </Pages.Link>
               </li>
             })->React.array} </ul>
           {hasPreviousPage
-            ? <Link href={`/posts/${(page - 1)->Int.toString}`}>
+            ? <Pages.Link href={`/posts/${(page - 1)->Int.toString}`}>
                 {"Previous page"->React.string}
-              </Link>
+              </Pages.Link>
             : React.null}
           {hasNextPage
-            ? <Link href={`/posts/${(page + 1)->Int.toString}`}> {"Next page"->React.string} </Link>
+            ? <Pages.Link href={`/posts/${(page + 1)->Int.toString}`}>
+                {"Next page"->React.string}
+              </Pages.Link>
             : React.null}
         </>
       }}
@@ -52,7 +53,7 @@ module PostList = {
 module Page = {
   @react.component
   let make = (~page) => {
-    let _posts = useItem("pages", ~id=page)
+    let _posts = Pages.useItem("pages", ~id=page)
     <div />
   }
 }
@@ -60,18 +61,18 @@ module Page = {
 module Post = {
   @react.component
   let make = (~post) => {
-    let post = useItem("posts", ~id=post)
+    let post = Pages.useItem("posts", ~id=post)
     <div>
-      <Link href="/"> {"< Go back to the homepage"->React.string} </Link>
+      <Pages.Link href="/"> {"< Go back to the homepage"->React.string} </Pages.Link>
       {switch post {
       | NotAsked | Loading => "Loading..."->React.string
       | Done(Error(_)) => "Error"->React.string
       | Done(Ok(post)) => <>
           <h1>
-            <Head>
+            <Pages.Head>
               <title> {(`${post.title} - my website`)->React.string} </title>
               <meta name="description" value={post.title} />
-            </Head>
+            </Pages.Head>
             {post.title->React.string}
           </h1>
           {"Contents:"->React.string}
@@ -91,14 +92,14 @@ module App = {
     | rest => ("/", rest)
     }
     <>
-      <Head>
+      <Pages.Head>
         <title> {"My fancy website"->React.string} </title>
         <meta name="description" value="My website" />
         <style> {"html { font-family: sans-serif }"->React.string} </style>
-      </Head>
-      <Link href=prefix>
-        <h1 className=Styles.title> {"ReScript Static Website"->React.string} </h1>
-      </Link>
+      </Pages.Head>
+      <Pages.Link href=prefix>
+        <h1 className=Styles.title> {"ReScript Pages"->React.string} </h1>
+      </Pages.Link>
       {switch path {
       | list{} => <Home />
       | list{"post", post} => <Post post />
@@ -112,7 +113,7 @@ module App = {
   }
 }
 
-let default = StaticWebsite.make(
+let default = Pages.make(
   <App />,
   {
     siteTitle: "bloodyowl",

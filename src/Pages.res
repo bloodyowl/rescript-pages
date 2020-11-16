@@ -11,12 +11,19 @@ let mapError = error =>
   | #Timeout => Timeout
   }
 
-type listItem = {slug: string, title: string, date: option<string>, meta: Js.Dict.t<string>}
+type listItem = {
+  slug: string,
+  title: string,
+  date: option<string>,
+  draft: bool,
+  meta: Js.Dict.t<string>,
+}
 
 type item = {
   slug: string,
   title: string,
   date: option<string>,
+  draft: bool,
   meta: Js.Dict.t<string>,
   body: string,
 }
@@ -46,9 +53,6 @@ module Link = {
   }
 }
 
-@bs.get external getElementType: React.element => string = "type"
-@bs.get external getElementProps: React.element => Js.Dict.t<string> = "props"
-
 module Context = {
   type t = {
     lists: Map.String.t<Map.String.t<Map.Int.t<AsyncData.t<result<paginated<listItem>, error>>>>>,
@@ -76,8 +80,6 @@ module Context = {
     let make = context->React.Context.provider
   }
 
-  @bs.val external document: {..} = "document"
-
   @react.component
   let make = (~value: option<t>=?, ~children: React.element) => {
     let (value, setValue) = React.useState(() => value->Option.getWithDefault(default))
@@ -85,21 +87,6 @@ module Context = {
     <Provider value={(value, setValue)}> children </Provider>
   }
 }
-
-let elementToIdentifier = element =>
-  switch element->getElementType {
-  | "title" => Some("title")
-  | "meta" =>
-    Some(
-      "meta:" ++
-      element->getElementProps->Js.Dict.get("name")->Option.getWithDefault("") ++
-      element->getElementProps->Js.Dict.get("property")->Option.getWithDefault("") ++
-      element->getElementProps->Js.Dict.get("charset")->Option.getWithDefault(""),
-    )
-  | "link" =>
-    Some("link:" ++ element->getElementProps->Js.Dict.get("rel")->Option.getWithDefault(""))
-  | _ => None
-  }
 
 module Head = {
   @react.component @bs.module("react-helmet")

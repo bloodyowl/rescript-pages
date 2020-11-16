@@ -1,12 +1,8 @@
 let fs = require("fs");
 let path = require("path");
 let webpack = require("webpack");
-let StaticWebsiteServer = require("./StaticWebsiteServer.bs");
 let chalk = require("chalk");
-
-let args = process.argv.slice(2)
-let command = args[0]
-let entry = args[1]
+let PagesServer = require("./PagesServer.bs");
 
 global.__ = localeKey => localeKey
 
@@ -34,17 +30,16 @@ function requireFresh(path) {
   return require(path)
 }
 
-function prerenderForConfig(config) {
-  StaticWebsiteServer.getFiles(config, fs.readFileSync)
+function prerenderForConfig(config, mode) {
+  PagesServer.getFiles(config, fs.readFileSync, mode)
     .forEach(([filePath, value]) => {
       fs.mkdirSync(path.dirname(path.join(process.cwd(), config.distDirectory, filePath)), { recursive: true });
       fs.writeFileSync(path.join(process.cwd(), config.distDirectory, filePath), value, "utf8")
     })
 }
 
-let { default: { config } } = require(path.join(process.cwd(), entry))
-
-async function start() {
+async function start(entry) {
+  let { default: { config } } = require(entry)
   let express = require("express")
   let getPort = require("get-port")
   let app = express();
@@ -55,7 +50,7 @@ async function start() {
   fs = outputFileSystem
   outputFileSystem.join = path.join.bind(path);
 
-  let compiler = webpack(StaticWebsiteServer.getWebpackConfig(config, "development", entry))
+  let compiler = webpack(PagesServer.getWebpackConfig(config, "development", entry))
   // patch web compilers to write on memory
   compiler.compilers.forEach(compiler => {
     if (compiler.options.target == "web") {
@@ -85,13 +80,13 @@ async function start() {
         } else {
           resolve()
           // reload config
-          let entryExports = requireFresh(path.join(process.cwd(), entry))
+          let entryExports = requireFresh(entry)
           if (entryExports.default == undefined) {
             // multiple build occuring, wait for the next one
             return
           }
           config = entryExports.default.config
-          prerenderForConfig(config)
+          prerenderForConfig(config, "development")
           if (!isFirstRun) {
             ws.send("change")
           }
@@ -111,7 +106,7 @@ async function start() {
   watcher
     .on("all", function (_) {
       console.log("Content changed")
-      prerenderForConfig(config)
+      prerenderForConfig(config, "development")
       ws.send("change")
     })
 
@@ -141,14 +136,16 @@ async function start() {
       res.status(404).end(null)
     }
   });
-  app.listen(8094)
-  console.log("Dev server running at: http://localhost:8094")
+  let serverPort = await getPort()
+  app.listen(serverPort)
+  console.log(`Dev server running at: ${chalk.green(`http://localhost:${serverPort}`)}`)
 }
 
-async function build() {
+async function build(entry) {
+  let { default: { config } } = require(entry)
   console.log("1/2 Bundling assets")
   await new Promise((resolve, reject) => {
-    let compiler = webpack(StaticWebsiteServer.getWebpackConfig(config, "production", entry))
+    let compiler = webpack(PagesServer.getWebpackConfig(config, "production", entry))
     compiler.run((error, stats) => {
       if (error) {
         reject(error);
@@ -163,14 +160,9 @@ async function build() {
     })
   })
   console.log("2/2 Prerendering pages")
-  prerenderForConfig(config)
+  prerenderForConfig(config, "production")
   console.log("Done!")
 }
 
-
-console.log(chalk.blue("ReScript Static Website"))
-if (command == "start") {
-  start()
-} else {
-  build()
-}
+exports.start = start
+exports.build = build

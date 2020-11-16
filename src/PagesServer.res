@@ -1,5 +1,5 @@
 open Belt
-open StaticWebsite
+open Pages
 
 type dirent
 @bs.send external isDirectory: dirent => bool = "isDirectory"
@@ -10,20 +10,18 @@ type dirent
 @bs.val external cwd: unit => string = "process.cwd"
 @bs.module("path") external join: (string, string) => string = "join"
 @bs.module("path") external join3: (string, string, string) => string = "join"
-@bs.module("path") external join4: (string, string, string, string) => string = "join"
 @bs.module("path") external basename: (string, string) => string = "basename"
 @bs.module("path") external extname: string => string = "extname"
 @bs.module external frontMatter: string => {"attributes": 'a, "body": string} = "front-matter"
 type config = {"highlight": (string, string) => string}
+
+external directionAsString: direction => string = "%identity"
 
 type remarkable
 
 @bs.new @bs.module("remarkable")
 external remarkable: (string, config) => remarkable = "Remarkable"
 @bs.send external render: (remarkable, string) => string = "render"
-
-@bs.module("highlight.js")
-external highlightAuto: string => {"value": string} = "highlightAuto"
 
 @bs.module("highlight.js")
 external highlight: (~lang: string, string) => {"value": string} = "highlight"
@@ -61,6 +59,7 @@ let getCollectionItem = (slug, path) => {
     slug: slug,
     title: meta->Js.Dict.get("title")->Option.getWithDefault("Untitled"),
     date: meta->Js.Dict.get("date")->Option.map(Js.Date.toUTCString),
+    draft: meta->Js.Dict.get("draft")->Option.getWithDefault(false),
     meta: meta,
     body: render(remarkable, parsed["body"]),
   }
@@ -68,6 +67,7 @@ let getCollectionItem = (slug, path) => {
     slug: slug,
     title: meta->Js.Dict.get("title")->Option.getWithDefault("Untitled"),
     date: meta->Js.Dict.get("date")->Option.map(Js.Date.toUTCString),
+    draft: meta->Js.Dict.get("draft")->Option.getWithDefault(false),
     meta: meta,
   }
   (item, listItem)
@@ -154,7 +154,8 @@ let renderRssItem = (config, variant, item: listItem, url) => {
   | Some(subdir) => join3(config.baseUrl, subdir, url)
   | None => join(config.baseUrl, url)
   }
-  let date = item.date->Option.map(date => `\n      <pubDate>${date}</pubDate>`)->Option.getWithDefault("")
+  let date =
+    item.date->Option.map(date => `\n      <pubDate>${date}</pubDate>`)->Option.getWithDefault("")
   `<item>
       <title><![CDATA[${item.title}]]></title>
       <link>${link}</link>
@@ -195,7 +196,7 @@ let requireFresh = path => {
   require(path)
 }
 
-let getFiles = (config, readFileSync) => {
+let getFiles = (config, readFileSync, mode) => {
   let (files, pages) = config.variants->Array.reduce((Map.String.empty, Set.String.empty), ((
     map,
     set,
@@ -204,10 +205,23 @@ let getFiles = (config, readFileSync) => {
     | Some(subdirectory) => join3(cwd(), config.distDirectory, subdirectory)
     | None => join(cwd(), config.distDirectory)
     }
-    let webpackHtml = readFileSync(. join(directory, "_source.html"))
+    let webpackHtml = readFileSync(. join(directory, "_source.html"), "utf8")
     switch requireFresh(join(directory, "_entry.js"))["default"] {
     | Some({app, provider}) =>
       let collections = getCollections(variant)
+      let now = Js.Date.now()
+      let collections = switch mode {
+      | #development => collections
+      | #production => collections->Map.String.map(values => {
+          values->Map.String.toArray->Array.keep(((_key, (item, _))) =>
+            switch item {
+            | {draft: true} => false
+            | {date: Some(date)} => Js.Date.fromString(date)->Js.Date.getTime < now
+            | _ => true
+            }
+          )->Map.String.fromArray
+        })
+      }
       let store =
         collections
         ->Map.String.toArray
@@ -469,7 +483,7 @@ let getWebpackConfig = (config, mode: mode, entry) => {
   config.variants->Array.reduce([], (acc, variant) => {
     acc->Array.concat([
       {
-        "entry": join(cwd(), entry),
+        "entry": entry,
         "mode": mode,
         "devtool": false,
         "target": "node",
@@ -498,7 +512,7 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         ]),
       },
       {
-        "entry": join(cwd(), entry),
+        "entry": entry,
         "mode": mode,
         "devtool": false,
         "target": "web",

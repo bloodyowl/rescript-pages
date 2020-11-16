@@ -6,10 +6,13 @@
     "build": "bsb -make-world",
     "watch": "bsb -make-world -w"
   },
+  "bin": {
+    "pages": "bin/pages"
+  },
   "keywords": [
     "BuckleScript"
   ],
-  "author": "",
+  "author": "bloodyowl <bloodyowl@icloud.com>",
   "license": "MIT",
   "devDependencies": {
     "bs-platform": "^8.0.0"
