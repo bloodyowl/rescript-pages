@@ -2,6 +2,7 @@ let fs = require("fs");
 let path = require("path");
 let webpack = require("webpack");
 let chalk = require("chalk");
+let mime = require("mime");
 let PagesServer = require("./PagesServer.bs");
 
 global.__ = localeKey => localeKey
@@ -110,6 +111,17 @@ async function start(entry) {
       ws.send("change")
     })
 
+  function setMime(path, res) {
+    if (res.getHeader("Content-Type")) {
+      return
+    }
+    let type = mime.getType(path)
+    if (!type) {
+      return
+    }
+    res.setHeader("Content-Type", type);
+  }
+
   app.use((req, res, next) => {
     let url = req.path;
     let filePath = url.startsWith("/") ? url.slice(1) : url;
@@ -125,6 +137,7 @@ async function start(entry) {
             let wsSuffix = (pathToTry.endsWith(".html") ? suffix : "");
             fs.readFile(pathToTry, (err, data) => {
               if (err) { } else {
+                setMime(pathToTry, res)
                 res.status(200).end(data + wsSuffix);
               }
             })
