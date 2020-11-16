@@ -135,9 +135,10 @@ async function start(entry) {
           if (stat.isFile()) {
             returned = true
             let wsSuffix = (pathToTry.endsWith(".html") ? suffix : "");
-            fs.readFile(pathToTry, (err, data) => {
+            let currentPath = pathToTry
+            fs.readFile(currentPath, (err, data) => {
               if (err) { } else {
-                setMime(pathToTry, res)
+                setMime(currentPath, res)
                 res.status(200).end(data + wsSuffix);
               }
             })
