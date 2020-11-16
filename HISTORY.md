@@ -1,3 +1,9 @@
+## 0.1.7
+
+Fixes:
+
+- Updates (a8a1add)
+
 ## 0.1.6
 
 Fixes:
