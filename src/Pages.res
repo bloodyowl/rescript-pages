@@ -59,13 +59,88 @@ type paginated<'a> = {
 type direction = [#asc | #desc]
 external directionAsString: direction => string = "%identity"
 
+module ServerUrlContext = {
+  let context = React.createContext(None)
+
+  module Provider = {
+    @bs.obj
+    external makeProps: (
+      ~value: option<ReasonReactRouter.url>,
+      ~children: React.element,
+      ~key: string=?,
+      unit,
+    ) => {"value": option<ReasonReactRouter.url>, "children": React.element} = ""
+    let make = context->React.Context.provider
+  }
+}
+
+// copied from ReasonReactRouter
+let pathParse = str =>
+  switch str {
+  | "" | "/" => list{}
+  | raw =>
+    /* remove the preceeding /, which every pathname seems to have */
+    let raw = Js.String.sliceToEnd(~from=1, raw)
+    /* remove the trailing /, which some pathnames might have. Ugh */
+    let raw = switch Js.String.get(raw, Js.String.length(raw) - 1) {
+    | "/" => Js.String.slice(~from=0, ~to_=-1, raw)
+    | _ => raw
+    }
+    /* remove search portion if present in string */
+    let raw = switch raw |> Js.String.splitAtMost("?", ~limit=2) {
+    | [path, _] => path
+    | _ => raw
+    }
+
+    raw
+    |> Js.String.split("/")
+    |> Js.Array.filter(item => String.length(item) != 0)
+    |> List.fromArray
+  }
+
+@bs.val external pagesPath: string = "process.env.PAGES_PATH"
+let pagesPath = pathParse(pagesPath)
+
+let rec stripInitialPath = (path, sourcePath) => {
+  switch (path, sourcePath) {
+  | (list{a1, ...a2}, list{b1, ...b2}) when a1 === b1 => stripInitialPath(a2, b2)
+  | (path, _) => path
+  }
+}
+
+let useUrl = () => {
+  let serverUrl = React.useContext(ServerUrlContext.context)
+  let {path} as url = ReasonReactRouter.useUrl(~serverUrl?, ())
+  {...url, path: stripInitialPath(path, pagesPath)}
+}
+
 module Link = {
   @react.component
-  let make = (~href, ~className=?, ~style=?, ~children) => {
+  let make = (
+    ~href,
+    ~className=?,
+    ~style=?,
+    ~activeClassName=?,
+    ~activeStyle=?,
+    ~matchSubroutes=false,
+    ~children,
+  ) => {
+    let url = useUrl()
+    let path = "/" ++ String.concat("/", url.path)
+    let isActive = matchSubroutes
+      ? Js.String.startsWith(href, path ++ "/") || Js.String.startsWith(href, path)
+      : path === href || path ++ "/" === href
     <a
       href
-      ?className
-      ?style
+      className={CssJs.merge(.
+        [className, isActive ? activeClassName : None]->Array.keepMap(x => x),
+      )}
+      style=?{switch (style, isActive ? activeStyle : None) {
+      | (Some(a), Some(b)) => Some(ReactDOM.Style.combine(a, b))
+      | (Some(a), None) => Some(a)
+      | (None, Some(b)) => Some(b)
+      | (None, None) => None
+      }}
       onClick={event => {
         event->ReactEvent.Mouse.preventDefault
         ReasonReactRouter.push(href)
@@ -240,6 +315,14 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
 
 @bs.get external textContent: Dom.element => string = "textContent"
 
+module App = {
+  @react.component
+  let make = (~config, ~app) => {
+    let url = useUrl()
+    {React.createElement(app, {"url": url, "config": config})}
+  }
+}
+
 let start = (app, config) => {
   let root = ReactDOM.querySelector("#root")
   let initialData =
@@ -248,17 +331,8 @@ let start = (app, config) => {
     ->Option.map(Js.Json.deserializeUnsafe)
   switch (root, initialData) {
   | (Some(root), Some(initialData)) =>
-    ReactDOM.hydrate(
-      <Context config value=initialData>
-        {React.createElement(app, {"serverUrl": None, "config": config})}
-      </Context>,
-      root,
-    )
-  | (Some(root), None) =>
-    ReactDOM.render(
-      <Context config> {React.createElement(app, {"serverUrl": None, "config": config})} </Context>,
-      root,
-    )
+    ReactDOM.hydrate(<Context config value=initialData> <App app config /> </Context>, root)
+  | (Some(root), None) => ReactDOM.render(<Context config> <App app config /> </Context>, root)
   | (None, _) => Js.Console.error(`Can't find the app's root container`)
   }
 }
@@ -266,7 +340,7 @@ let start = (app, config) => {
 @bs.val external window: {..} = "window"
 
 type app = {
-  app: React.component<{"config": config, "serverUrl": option<ReasonReactRouter.url>}>,
+  app: React.component<{"config": config, "url": ReasonReactRouter.url}>,
   config: config,
   provider: React.component<{
     "config": config,

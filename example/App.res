@@ -85,15 +85,10 @@ module Post = {
 
 module App = {
   @react.component
-  let make = (~serverUrl=?, ~config as _) => {
-    let {path} = ReasonReactRouter.useUrl(~serverUrl?, ())
-    let (prefix, path) = switch path {
-    | list{"en", ...rest} => ("/en/", rest)
-    | rest => ("/", rest)
-    }
-    <>
+  let make = (~url as {ReasonReact.Router.path: path}, ~config as _) => {
+    <div>
       <Pages.Head> <style> {"html { font-family: sans-serif }"->React.string} </style> </Pages.Head>
-      <Pages.Link href=prefix>
+      <Pages.Link href="/">
         <h1 className=Styles.title> {"ReScript Pages"->React.string} </h1>
       </Pages.Link>
       {switch path {
@@ -105,7 +100,7 @@ module App = {
       | list{page} => <Page page />
       | _ => <div> {"Page not found..."->React.string} </div>
       }}
-    </>
+    </div>
   }
 }
 

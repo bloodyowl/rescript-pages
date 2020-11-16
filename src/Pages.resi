@@ -50,6 +50,13 @@ type paginated<'a> = {
 
 type direction = [#asc | #desc]
 
+module ServerUrlContext: {
+  module Provider: {
+    @react.component
+    let make: (~value: option<ReasonReactRouter.url>, ~children: React.element) => React.element
+  }
+}
+
 module Context: {
   type t = {
     lists: Belt.Map.String.t<
@@ -68,6 +75,9 @@ module Link: {
     ~href: string,
     ~className: string=?,
     ~style: ReactDOM.Style.t=?,
+    ~activeClassName: string=?,
+    ~activeStyle: ReactDOM.Style.t=?,
+    ~matchSubroutes: bool=?,
     ~children: React.element,
   ) => React.element
 }
@@ -85,8 +95,16 @@ let useCollection: (
 
 let useItem: (string, ~id: string) => AsyncData.t<result<item, error>>
 
+module App: {
+  @react.component
+  let make: (
+    ~config: config,
+    ~app: React.component<{"config": config, "url": ReasonReactRouter.url}>,
+  ) => React.element
+}
+
 type app = {
-  app: React.component<{"config": config, "serverUrl": option<ReasonReactRouter.url>}>,
+  app: React.component<{"config": config, "url": ReasonReactRouter.url}>,
   config: config,
   provider: React.component<{
     "value": option<Context.t>,
@@ -95,7 +113,4 @@ type app = {
   }>,
 }
 
-let make: (
-  React.component<{"config": config, "serverUrl": option<ReasonReactRouter.url>}>,
-  config,
-) => app
+let make: (React.component<{"config": config, "url": ReasonReactRouter.url}>, config) => app

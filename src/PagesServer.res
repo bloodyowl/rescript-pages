@@ -305,13 +305,9 @@ let getFiles = (config, readFileSync, mode) => {
               {
                 "value": Some(context),
                 "config": config,
-                "children": React.createElement(
-                  app,
-                  {
-                    "config": config,
-                    "serverUrl": Some(url),
-                  },
-                ),
+                "children": <Pages.ServerUrlContext.Provider value=Some(url)>
+                  <Pages.App app config />
+                </Pages.ServerUrlContext.Provider>,
               },
             )
           }),
@@ -475,6 +471,7 @@ type plugin
 external inlineTranslationPlugin: Js.Null.t<Js.Json.t> => plugin =
   "inline-translations-webpack-plugin"
 @bs.new @bs.module external copyPlugin: {..} => plugin = "copy-webpack-plugin"
+@bs.new @bs.module("webpack") external definePlugin: {..} => plugin = "DefinePlugin"
 
 type mode = [#development | #production]
 
@@ -500,7 +497,14 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           "chunkFilename": `public/chunks/[contenthash].js`,
           "jsonpFunction": "staticWebsite__d",
         },
-        "plugins": [],
+        "plugins": [
+          definePlugin({
+            "process.env.PAGES_PATH": switch variant.subdirectory {
+            | Some(subdir) => join(url(config.baseUrl).pathname, subdir)
+            | None => url(config.baseUrl).pathname
+            },
+          }),
+        ],
         "externals": Js.Dict.fromArray([
           ("react", "commonjs2 react"),
           ("react-dom", "commonjs2 react-dom"),
@@ -531,6 +535,12 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         },
         "externals": Js.Dict.empty(),
         "plugins": [
+          definePlugin({
+            "process.env.PAGES_PATH": switch variant.subdirectory {
+            | Some(subdir) => join(url(config.baseUrl).pathname, subdir)
+            | None => url(config.baseUrl).pathname
+            },
+          }),
           htmlPlugin({
             "filename": `_source.html`,
             "templateContent": "",
