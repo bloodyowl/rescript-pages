@@ -1,3 +1,9 @@
+## 0.1.3
+
+Features:
+
+- Fix node resolve for webpack (60ba1dc)
+
 ## 0.1.2
 
 Features:
