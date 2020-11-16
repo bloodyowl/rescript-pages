@@ -83,8 +83,8 @@ module Link: {
 }
 
 module Head: {
-  @react.component @bs.module("react-helmet")
-  external make: (~children: React.element) => React.element = "Helmet"
+  @react.component
+  let make: (~children: React.element) => React.element
 }
 
 let useCollection: (
