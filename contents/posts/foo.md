@@ -1,5 +1,5 @@
 ---
-title: Hello from the super post
+title: Hello from the super post test
 ---
 
 Foo bar baz **new stuff**

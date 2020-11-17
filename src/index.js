@@ -50,6 +50,27 @@ async function start(entry) {
   // rewrite `fs` from now on
   fs = outputFileSystem
   outputFileSystem.join = path.join.bind(path);
+  let chokidar = require("chokidar");
+  let watchedDirectories = new Set();
+
+  function onContentChange(_) {
+    console.log("Content changed")
+    prerenderForConfig(config, "development")
+    ws.send("change")
+  }
+
+  let watchDirectories = () => {
+    watchedDirectories.forEach(watcher => watcher.off("all", onContentChange))
+    watchedDirectories = new Set()
+    config.variants.forEach(item => {
+      let watcher = chokidar.watch(path.join(process.cwd(), item.contentDirectory), {
+        ignored: /^\./, persistent: true,
+        ignoreInitial: true,
+      });
+      watcher.on("all", onContentChange)
+      watchedDirectories.add(watcher)
+    })
+  }
 
   let compiler = webpack(PagesServer.getWebpackConfig(config, "development", entry))
   // patch web compilers to write on memory
@@ -88,6 +109,7 @@ async function start(entry) {
           }
           config = entryExports.default.config
           prerenderForConfig(config, "development")
+          watchDirectories()
           if (!isFirstRun) {
             ws.send("change")
           }
@@ -97,19 +119,7 @@ async function start(entry) {
     })
   )
 
-  let chokidar = require("chokidar");
-
-  let watcher = chokidar.watch(path.join(process.cwd()), {
-    ignored: /^\./, persistent: true,
-    ignoreInitial: true,
-  });
-
-  watcher
-    .on("all", function (_) {
-      console.log("Content changed")
-      prerenderForConfig(config, "development")
-      ws.send("change")
-    })
+  watchDirectories()
 
   function setMime(path, res) {
     if (res.getHeader("Content-Type")) {
