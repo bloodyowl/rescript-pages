@@ -1,3 +1,9 @@
+## 0.1.9
+
+Changes:
+
+- Smaller watcher (f6ebedb)
+
 ## 0.1.8
 
 Fixes:
