@@ -314,11 +314,18 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
 
 @bs.get external textContent: Dom.element => string = "textContent"
 
-module App = {
+module AppContents = {
   @react.component
   let make = (~config, ~app) => {
     let url = useUrl()
-    {React.createElement(app, {"url": url, "config": config})}
+    React.createElement(app, {"url": url, "config": config})
+  }
+}
+
+module App = {
+  @react.component
+  let make = (~config, ~app) => {
+    <AppContents config app />
   }
 }
 
