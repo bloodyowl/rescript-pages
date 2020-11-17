@@ -1,3 +1,9 @@
+## 0.1.10
+
+Changes:
+
+- SSR fixes (128ca35)
+
 ## 0.1.9
 
 Changes:
