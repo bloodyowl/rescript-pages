@@ -103,7 +103,7 @@ type app = {
     "value": option<Context.t>,
     "serverUrl": option<ReasonReactRouter.url>,
     "config": config,
-    "children": React.element,
+    "render": unit => React.element,
   }>,
 }
 

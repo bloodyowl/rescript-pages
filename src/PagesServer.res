@@ -321,7 +321,7 @@ let getFiles = (config, readFileSync, mode) => {
                 "value": Some(context),
                 "serverUrl": Some(url),
                 "config": config,
-                "children": <Pages.App app config />,
+                "render": () => <Pages.App app config />,
               },
             )
           }),

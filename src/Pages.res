@@ -182,7 +182,7 @@ module Context = {
   }
 
   @react.component
-  let make = (~value: option<t>=?, ~serverUrl=?, ~config, ~children: React.element) => {
+  let make = (~value: option<t>=?, ~serverUrl=?, ~config, ~render) => {
     let (value, setValue) = React.useState(() => value->Option.getWithDefault(default))
 
     <ServerUrlContext.Provider value=serverUrl>
@@ -190,7 +190,7 @@ module Context = {
         <title> {config.siteTitle->React.string} </title>
         <meta name="description" value=config.siteDescription />
       </Head>
-      <Provider value={(value, setValue)}> children </Provider>
+      <Provider value={(value, setValue)}> {render()} </Provider>
     </ServerUrlContext.Provider>
   }
 }
@@ -314,18 +314,11 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
 
 @bs.get external textContent: Dom.element => string = "textContent"
 
-module AppContents = {
+module App = {
   @react.component
   let make = (~config, ~app) => {
     let url = useUrl()
     React.createElement(app, {"url": url, "config": config})
-  }
-}
-
-module App = {
-  @react.component
-  let make = (~config, ~app) => {
-    <AppContents config app />
   }
 }
 
@@ -337,8 +330,9 @@ let start = (app, config) => {
     ->Option.map(Js.Json.deserializeUnsafe)
   switch (root, initialData) {
   | (Some(root), Some(initialData)) =>
-    ReactDOM.hydrate(<Context config value=initialData> <App app config /> </Context>, root)
-  | (Some(root), None) => ReactDOM.render(<Context config> <App app config /> </Context>, root)
+    ReactDOM.hydrate(<Context config value=initialData render={() => <App app config />} />, root)
+  | (Some(root), None) =>
+    ReactDOM.render(<Context config render={() => <App app config />} />, root)
   | (None, _) => Js.Console.error(`Can't find the app's root container`)
   }
 }
@@ -352,7 +346,7 @@ type app = {
     "config": config,
     "serverUrl": option<ReasonReactRouter.url>,
     "value": option<Context.t>,
-    "children": React.element,
+    "render": unit => React.element,
   }>,
 }
 
