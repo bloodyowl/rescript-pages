@@ -319,10 +319,9 @@ let getFiles = (config, readFileSync, mode) => {
               provider,
               {
                 "value": Some(context),
+                "serverUrl": Some(url),
                 "config": config,
-                "children": <Pages.ServerUrlContext.Provider value=Some(url)>
-                  <Pages.App app config />
-                </Pages.ServerUrlContext.Provider>,
+                "children": <Pages.App app config />,
               },
             )
           }),

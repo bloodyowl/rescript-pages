@@ -182,16 +182,16 @@ module Context = {
   }
 
   @react.component
-  let make = (~value: option<t>=?, ~config, ~children: React.element) => {
+  let make = (~value: option<t>=?, ~serverUrl=?, ~config, ~children: React.element) => {
     let (value, setValue) = React.useState(() => value->Option.getWithDefault(default))
 
-    <>
+    <ServerUrlContext.Provider value=serverUrl>
       <Head>
         <title> {config.siteTitle->React.string} </title>
         <meta name="description" value=config.siteDescription />
       </Head>
       <Provider value={(value, setValue)}> children </Provider>
-    </>
+    </ServerUrlContext.Provider>
   }
 }
 
@@ -343,6 +343,7 @@ type app = {
   config: config,
   provider: React.component<{
     "config": config,
+    "serverUrl": option<ReasonReactRouter.url>,
     "value": option<Context.t>,
     "children": React.element,
   }>,

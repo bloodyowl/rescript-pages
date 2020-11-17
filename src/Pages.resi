@@ -50,13 +50,6 @@ type paginated<'a> = {
 
 type direction = [#asc | #desc]
 
-module ServerUrlContext: {
-  module Provider: {
-    @react.component
-    let make: (~value: option<ReasonReactRouter.url>, ~children: React.element) => React.element
-  }
-}
-
 module Context: {
   type t = {
     lists: Belt.Map.String.t<
@@ -108,6 +101,7 @@ type app = {
   config: config,
   provider: React.component<{
     "value": option<Context.t>,
+    "serverUrl": option<ReasonReactRouter.url>,
     "config": config,
     "children": React.element,
   }>,
