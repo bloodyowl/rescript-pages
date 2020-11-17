@@ -182,7 +182,7 @@ module Context = {
   }
 
   @react.component
-  let make = (~value: option<t>=?, ~serverUrl=?, ~config, ~render) => {
+  let make = (~value: option<t>=?, ~serverUrl=?, ~config, ~children) => {
     let (value, setValue) = React.useState(() => value->Option.getWithDefault(default))
 
     <ServerUrlContext.Provider value=serverUrl>
@@ -190,7 +190,7 @@ module Context = {
         <title> {config.siteTitle->React.string} </title>
         <meta name="description" value=config.siteDescription />
       </Head>
-      <Provider value={(value, setValue)}> {render()} </Provider>
+      <Provider value={(value, setValue)}> {children} </Provider>
     </ServerUrlContext.Provider>
   }
 }
@@ -330,9 +330,8 @@ let start = (app, config) => {
     ->Option.map(Js.Json.deserializeUnsafe)
   switch (root, initialData) {
   | (Some(root), Some(initialData)) =>
-    ReactDOM.hydrate(<Context config value=initialData render={() => <App app config />} />, root)
-  | (Some(root), None) =>
-    ReactDOM.render(<Context config render={() => <App app config />} />, root)
+    ReactDOM.hydrate(<Context config value=initialData> <App app config /> </Context>, root)
+  | (Some(root), None) => ReactDOM.render(<Context config> <App app config /> </Context>, root)
   | (None, _) => Js.Console.error(`Can't find the app's root container`)
   }
 }
@@ -341,12 +340,19 @@ let start = (app, config) => {
 
 type app = {
   app: React.component<{"config": config, "url": ReasonReactRouter.url}>,
+  container: React.component<{
+    "config": config,
+    "app": React.component<{
+      "config": config,
+      "url": ReasonReactRouter.url,
+    }>,
+  }>,
   config: config,
   provider: React.component<{
     "config": config,
     "serverUrl": option<ReasonReactRouter.url>,
     "value": option<Context.t>,
-    "render": unit => React.element,
+    "children": React.element,
   }>,
 }
 
@@ -354,5 +360,5 @@ let make = (app, config) => {
   if Js.typeof(window) != "undefined" {
     start(app, config)
   }
-  {app: app, config: config, provider: Context.make}
+  {app: app, container: App.make, config: config, provider: Context.make}
 }

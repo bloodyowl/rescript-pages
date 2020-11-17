@@ -215,7 +215,7 @@ let getFiles = (config, readFileSync, mode) => {
     }
     let webpackHtml = readFileSync(. join(directory, "_source.html"), "utf8")
     switch requireFresh(join(directory, "_entry.js"))["default"] {
-    | Some({app, provider}) =>
+    | Some({app, provider, container}) =>
       let collections = getCollections(variant)
       let now = Js.Date.now()
       let collections = switch mode {
@@ -321,7 +321,7 @@ let getFiles = (config, readFileSync, mode) => {
                 "value": Some(context),
                 "serverUrl": Some(url),
                 "config": config,
-                "render": () => <Pages.App app config />,
+                "children": React.createElement(container, {"app": app, "config": config}),
               },
             )
           }),

@@ -98,12 +98,19 @@ module App: {
 
 type app = {
   app: React.component<{"config": config, "url": ReasonReactRouter.url}>,
+  container: React.component<{
+    "config": config,
+    "app": React.component<{
+      "config": config,
+      "url": ReasonReactRouter.url,
+    }>,
+  }>,
   config: config,
   provider: React.component<{
     "value": option<Context.t>,
     "serverUrl": option<ReasonReactRouter.url>,
     "config": config,
-    "render": unit => React.element,
+    "children": React.element,
   }>,
 }
 
