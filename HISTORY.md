@@ -1,3 +1,9 @@
+## 0.1.11
+
+Changes:
+
+- Add app wrapper (54e89c7)
+
 ## 0.1.10
 
 Changes:
