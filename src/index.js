@@ -135,7 +135,7 @@ async function start(entry, devServerPort) {
   app.use((req, res, next) => {
     let url = req.path;
     let filePath = url.startsWith("/") ? url.slice(1) : url;
-    let normalizedFilePath = path.join(process.cwd(), "dist", filePath);
+    let normalizedFilePath = path.join(process.cwd(), config.distDirectory, filePath);
     let pathsToTry = [normalizedFilePath, normalizedFilePath + "/index.html"]
     let returned = false
     for (pathToTry of pathsToTry) {
