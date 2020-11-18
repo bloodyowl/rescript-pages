@@ -130,7 +130,7 @@ module Link = {
       ? Js.String.startsWith(href, path ++ "/") || Js.String.startsWith(href, path)
       : path === href || path ++ "/" === href
     <a
-      href={pagesPath ++ href}
+      href={(pagesPath ++ href)->Js.String2.replaceByRe(%re("/\/+/g"), "/")}
       className={CssJs.merge(.
         [className, isActive ? activeClassName : None]->Array.keepMap(x => x),
       )}
@@ -187,6 +187,7 @@ module Context = {
 
     <ServerUrlContext.Provider value=serverUrl>
       <Head>
+        <meta charSet="UTF-8" />
         <title> {config.siteTitle->React.string} </title>
         <meta name="description" value=config.siteDescription />
       </Head>
