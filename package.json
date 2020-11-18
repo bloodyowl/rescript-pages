@@ -1,6 +1,6 @@
 {
   "name": "rescript-pages",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "scripts": {
     "clean": "bsb -clean-world",
     "build": "bsb -make-world",
