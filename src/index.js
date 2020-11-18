@@ -160,7 +160,7 @@ async function start(entry, devServerPort) {
       res.status(404).end(null)
     }
   });
-  let serverPort = await devServerPort || getPort()
+  let serverPort = await (devServerPort || getPort())
   app.listen(serverPort)
   console.log(`Dev server running at: ${chalk.green(`http://localhost:${serverPort}`)}`)
 }
