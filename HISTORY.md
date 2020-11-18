@@ -1,3 +1,9 @@
+## 0.1.18
+
+Fix:
+
+- Fixed content path (5174a27)
+
 ## 0.1.17
 
 Changes:
