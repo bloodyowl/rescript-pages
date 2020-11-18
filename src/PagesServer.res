@@ -88,7 +88,10 @@ let getCollectionItems = path => {
 let getCollections = config => {
   readdirSync(join(cwd(), config.contentDirectory), {"withFileTypes": true})
   ->Array.keep(isDirectory)
-  ->Array.map(item => (item->name, getCollectionItems(join3(cwd(), "contents", item->name))))
+  ->Array.map(item => (
+    item->name,
+    getCollectionItems(join3(cwd(), config.contentDirectory, item->name)),
+  ))
   ->Map.String.fromArray
 }
 
