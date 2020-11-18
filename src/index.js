@@ -39,7 +39,7 @@ function prerenderForConfig(config, mode) {
     })
 }
 
-async function start(entry) {
+async function start(entry, devServerPort) {
   let { default: { config } } = require(entry)
   let express = require("express")
   let getPort = require("get-port")
@@ -160,7 +160,7 @@ async function start(entry) {
       res.status(404).end(null)
     }
   });
-  let serverPort = await getPort()
+  let serverPort = await devServerPort || getPort()
   app.listen(serverPort)
   console.log(`Dev server running at: ${chalk.green(`http://localhost:${serverPort}`)}`)
 }
