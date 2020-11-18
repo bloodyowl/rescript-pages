@@ -1,3 +1,9 @@
+## 0.1.17
+
+Changes:
+
+- Cleanup paths (e19099e)
+
 ## 0.1.16
 
 Changes:
