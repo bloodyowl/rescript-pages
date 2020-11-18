@@ -370,7 +370,7 @@ let getFiles = (config, readFileSync, mode) => {
         let helmet = renderStatic()
         (
           serverUrl,
-          `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}</head><div id="root">${html}</div><script id="initialData" type="text/data">${initialData}</script>${webpackHtml}${helmet["script"]}</html>`,
+          `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}</head><div id="root">${html}</div><script id="initialData" type="text/data">${initialData}</script>${webpackHtml}</html>`,
         )
       })
       ->Map.String.fromArray
