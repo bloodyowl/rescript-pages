@@ -149,7 +149,7 @@ async function start(entry) {
             fs.readFile(currentPath, (err, data) => {
               if (err) { } else {
                 setMime(currentPath, res)
-                res.status(200).end(data + wsSuffix);
+                res.status(200).end(wsSuffix != "" ? String(data) + wsSuffix : data);
               }
             })
           }
