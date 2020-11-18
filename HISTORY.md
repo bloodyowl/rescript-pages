@@ -1,3 +1,9 @@
+## 0.1.19
+
+Fix:
+
+- Fixed dist path (c020a47)
+
 ## 0.1.18
 
 Fix:
