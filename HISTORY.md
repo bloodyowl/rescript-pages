@@ -1,3 +1,9 @@
+## 0.1.14
+
+Fixes:
+
+- Don't coerce buffers to string (2acc1bc)
+
 ## 0.1.13
 
 Fixes:
