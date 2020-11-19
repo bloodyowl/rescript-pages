@@ -1,3 +1,9 @@
+## 0.1.26
+
+Fixes:
+
+- Join URLs properly (d4886d6)
+
 ## 0.1.25
 
 Fixes:
