@@ -1,3 +1,9 @@
+## 0.1.25
+
+Fixes:
+
+- Write APIs in correct directory (4e5f540)
+
 ## 0.1.24
 
 Fixes:
