@@ -1,3 +1,10 @@
+## 0.1.20
+
+Fix:
+
+- Set env var earlier (a7e4a14)
+- Expose publicPath (d3f2e1c)
+
 ## 0.1.19
 
 Fix:
