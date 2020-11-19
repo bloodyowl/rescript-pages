@@ -50,6 +50,8 @@ type paginated<'a> = {
 
 @bs.val external publicPath: string = "process.env.PAGES_PATH"
 
+let join: (string, string) => string
+
 type direction = [#asc | #desc]
 
 module Context: {

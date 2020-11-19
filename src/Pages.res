@@ -113,6 +113,8 @@ let useUrl = () => {
   {...url, path: stripInitialPath(path, pathParse(publicPath))}
 }
 
+let join = (s1, s2) => `${s1}/${s2}`->Js.String2.replaceByRe(%re("/\/+/g"), "/")
+
 module Link = {
   @react.component
   let make = (
@@ -130,7 +132,7 @@ module Link = {
       ? Js.String.startsWith(href, path ++ "/") || Js.String.startsWith(href, path)
       : path === href || path ++ "/" === href
     <a
-      href={(publicPath ++ href)->Js.String2.replaceByRe(%re("/\/+/g"), "/")}
+      href={join(publicPath, href)}
       className={CssJs.merge(.
         [className, isActive ? activeClassName : None]->Array.keepMap(x => x),
       )}
@@ -227,7 +229,7 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
           )),
         )),
       })
-      let url = `${publicPath}/api/${collection}/pages/${direction}/${page->Int.toString}.json`
+      let url = join(publicPath, `api/${collection}/pages/${direction}/${page->Int.toString}.json`)
       let future =
         Request.make(~url, ~responseType=Text, ())
         ->Future.mapError(~propagateCancel=true, mapError)
@@ -283,7 +285,7 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
           collection->Option.getWithDefault(Map.String.empty)->Map.String.set(id, status),
         )),
       })
-      let url = `${publicPath}/api/${collection}/items/${id}.json`
+      let url = join(publicPath, `/api/${collection}/items/${id}.json`)
       let future =
         Request.make(~url, ~responseType=Text, ())
         ->Future.mapError(~propagateCancel=true, mapError)
