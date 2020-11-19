@@ -1,3 +1,9 @@
+## 0.1.27
+
+Fixes:
+
+- Fix URLs (3bfe887)
+
 ## 0.1.26
 
 Fixes:
