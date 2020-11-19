@@ -30,8 +30,8 @@ external remarkable: (string, config) => remarkable = "Remarkable"
 @bs.send external render: (remarkable, string) => string = "render"
 @bs.send external use: (remarkable, remarkablePlugin) => unit = "use"
 
-@bs.module
-external linkify: remarkablePlugin = "remarkable/linkify"
+@bs.module("remarkable/linkify")
+external linkify: remarkablePlugin = "linkify"
 
 @bs.module("highlight.js")
 external highlight: (~lang: string, string) => {"value": string} = "highlight"
