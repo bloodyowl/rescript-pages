@@ -478,9 +478,7 @@ let getFiles = (config, readFileSync, mode) => {
     let filePath =
       filePath->Js.String2.startsWith("/") ? filePath->Js.String2.sliceToEnd(~from=1) : filePath
     let filePath =
-      filePath->Js.String2.startsWith("api/") ||
-      filePath->Js.String2.endsWith(".html") ||
-      filePath->Js.String2.endsWith(".xml")
+      extname(filePath) != "" ?
         ? filePath
         : filePath ++ (filePath->Js.String2.endsWith("/") ? "" : "/") ++ "index.html"
     (filePath, value)
