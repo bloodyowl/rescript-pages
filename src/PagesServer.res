@@ -380,7 +380,7 @@ let getFiles = (config, readFileSync, mode) => {
           initialData->Js.Json.serializeExn->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)
         let helmet = renderStatic()
         (
-          serverUrl,
+          join(config.distDirectory, serverUrl),
           `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}</head><div id="root">${html}</div><script id="initialData" type="text/data">${initialData}</script>${webpackHtml}</html>`,
         )
       })

@@ -34,8 +34,8 @@ function requireFresh(path) {
 function prerenderForConfig(config, mode) {
   PagesServer.getFiles(config, fs.readFileSync, mode)
     .forEach(([filePath, value]) => {
-      fs.mkdirSync(path.dirname(path.join(process.cwd(), config.distDirectory, filePath)), { recursive: true });
-      fs.writeFileSync(path.join(process.cwd(), config.distDirectory, filePath), value, "utf8")
+      fs.mkdirSync(path.dirname(path.join(process.cwd(), filePath)), { recursive: true });
+      fs.writeFileSync(path.join(process.cwd(), filePath), value, "utf8")
     })
 }
 
