@@ -217,6 +217,13 @@ let getFiles = (config, readFileSync, mode) => {
     | None => join(cwd(), config.distDirectory)
     }
     let webpackHtml = readFileSync(. join(directory, "_source.html"), "utf8")
+    setPagesPath(
+      processEnv,
+      switch variant.subdirectory {
+      | Some(subdir) => join(nodeUrl(config.baseUrl).pathname, subdir)
+      | None => nodeUrl(config.baseUrl).pathname
+      },
+    )
     switch requireFresh(join(directory, "_entry.js"))["default"] {
     | Some({app, provider, container}) =>
       let collections = getCollections(variant)
@@ -308,14 +315,6 @@ let getFiles = (config, readFileSync, mode) => {
           hash: "",
           search: "",
         }
-
-        setPagesPath(
-          processEnv,
-          switch variant.subdirectory {
-          | Some(subdir) => join(nodeUrl(config.baseUrl).pathname, subdir)
-          | None => nodeUrl(config.baseUrl).pathname
-          },
-        )
         let html = renderStylesToString(
           ReactDOMServer.renderToString({
             React.createElement(
