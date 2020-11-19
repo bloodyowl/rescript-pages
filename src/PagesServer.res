@@ -38,8 +38,14 @@ external registerLanguage: (hjs, string, language) => unit = "registerLanguage"
 
 hjs->registerLanguage("reason", reason)
 
-@bs.module("emotion-server")
-external renderStylesToString: string => string = "renderStylesToString"
+type emotionServer
+type emotionCache
+@bs.module("create-emotion-server")
+external createEmotionServer: emotionCache => emotionServer = "default"
+@bs.get external getEmotionCache: Pages.emotion => emotionCache = "cache"
+
+@bs.send
+external renderStylesToString: (emotionServer, string) => string = "renderStylesToString"
 
 let remarkable = remarkable(
   "full",
@@ -225,7 +231,8 @@ let getFiles = (config, readFileSync, mode) => {
       },
     )
     switch requireFresh(join(directory, "_entry.js"))["default"] {
-    | Some({app, provider, container}) =>
+    | Some({app, provider, container, emotion}) =>
+      let server = createEmotionServer(emotion->getEmotionCache)
       let collections = getCollections(variant)
       let now = Js.Date.now()
       let collections = switch mode {
@@ -316,6 +323,7 @@ let getFiles = (config, readFileSync, mode) => {
           search: "",
         }
         let html = renderStylesToString(
+          server,
           ReactDOMServer.renderToString({
             React.createElement(
               provider,
@@ -500,6 +508,9 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "target": "node",
         "resolve": {
           "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
+          "alias": Js.Dict.fromArray([
+            ("emotion", join(dirname, "emotion.js")),
+          ]),
         },
         "output": {
           "libraryTarget": Js.Undefined.return("commonjs2"),
@@ -529,7 +540,6 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           ("react-dom-server", "commonjs2 react-dom-server"),
           ("react-helmet", `commonjs2 react-helmet`),
           ("bs-platform", "commonjs2 bs-platform"),
-          ("emotion", "commonjs2 emotion"),
         ]),
       },
       {
@@ -539,6 +549,9 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "target": "web",
         "resolve": {
           "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
+          "alias": Js.Dict.fromArray([
+            ("emotion", join(dirname, "emotion.js")),
+          ]),
         },
         "output": {
           "libraryTarget": Js.Undefined.empty,

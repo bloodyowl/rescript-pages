@@ -338,6 +338,8 @@ let start = (app, config) => {
 }
 
 @bs.val external window: {..} = "window"
+type emotion
+@bs.module external emotion: emotion = "emotion"
 
 type app = {
   app: React.component<{"config": config, "url": ReasonReactRouter.url}>,
@@ -355,11 +357,12 @@ type app = {
     "value": option<Context.t>,
     "children": React.element,
   }>,
+  emotion: emotion,
 }
 
 let make = (app, config) => {
   if Js.typeof(window) != "undefined" {
     start(app, config)
   }
-  {app: app, container: App.make, config: config, provider: Context.make}
+  {app: app, container: App.make, config: config, provider: Context.make, emotion: emotion}
 }

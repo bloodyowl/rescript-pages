@@ -114,6 +114,23 @@ let getUrlsToPrerender = ({Pages.getAll: getAll, getPages}) =>
     ["404.html"],
   ])
 
+  {
+    open Css
+    global(
+      fontFace(
+        ~fontFamily="Madera",
+        ~src=list{url({
+          Pages.publicPath ++ "/foo"
+        })},
+        ~fontStyle=normal,
+        ~fontWeight=#num(400),
+        ~fontDisplay=#swap,
+        (),
+      ),
+    )
+
+  };
+
 let default = Pages.make(
   App.make,
   {

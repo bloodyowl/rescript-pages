@@ -98,6 +98,8 @@ module App: {
   ) => React.element
 }
 
+type emotion
+
 type app = {
   app: React.component<{"config": config, "url": ReasonReactRouter.url}>,
   container: React.component<{
@@ -114,6 +116,7 @@ type app = {
     "config": config,
     "children": React.element,
   }>,
+  emotion: emotion
 }
 
 let make: (React.component<{"config": config, "url": ReasonReactRouter.url}>, config) => app

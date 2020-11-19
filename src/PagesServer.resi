@@ -10,7 +10,7 @@ let getWebpackConfig: (
   "entry": string,
   "externals": Js.Dict.t<string>,
   "mode": mode,
-  "resolve": {"modules": array<string>},
+  "resolve": {"modules": array<string>, "alias": Js.Dict.t<string>},
   "output": {
     "chunkFilename": string,
     "filename": string,
