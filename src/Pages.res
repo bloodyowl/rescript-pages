@@ -227,7 +227,7 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
           )),
         )),
       })
-      let url = `/api/${collection}/pages/${direction}/${page->Int.toString}.json`
+      let url = `${publicPath}/api/${collection}/pages/${direction}/${page->Int.toString}.json`
       let future =
         Request.make(~url, ~responseType=Text, ())
         ->Future.mapError(~propagateCancel=true, mapError)
@@ -283,7 +283,7 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
           collection->Option.getWithDefault(Map.String.empty)->Map.String.set(id, status),
         )),
       })
-      let url = `/api/${collection}/items/${id}.json`
+      let url = `${publicPath}/api/${collection}/items/${id}.json`
       let future =
         Request.make(~url, ~responseType=Text, ())
         ->Future.mapError(~propagateCancel=true, mapError)
