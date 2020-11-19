@@ -1,3 +1,9 @@
+## 0.1.21
+
+Fixes:
+
+- Fixed CSS implementation (b4e112b)
+
 ## 0.1.20
 
 Fix:
