@@ -1,3 +1,9 @@
+## 0.1.22
+
+Fixes:
+
+- Fixed unnoticed bug with emotion (8dc3b28)
+
 ## 0.1.21
 
 Fixes:
