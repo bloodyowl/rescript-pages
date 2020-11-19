@@ -1,3 +1,9 @@
+## 0.1.24
+
+Fixes:
+
+- Scope API to variant (73f94c1)
+
 ## 0.1.23
 
 Fixes:
