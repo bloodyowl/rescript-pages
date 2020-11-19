@@ -14,7 +14,12 @@ type dirent
 @bs.module("path") external basename: (string, string) => string = "basename"
 @bs.module("path") external extname: string => string = "extname"
 @bs.module external frontMatter: string => {"attributes": 'a, "body": string} = "front-matter"
-type config = {"highlight": (string, string) => string}
+type config = {
+  "html": bool,
+  "linkify": bool,
+  "xhtmlOut": bool,
+  "highlight": (string, string) => string
+}
 
 external directionAsString: direction => string = "%identity"
 
@@ -50,6 +55,9 @@ external renderStylesToString: (emotionServer, string) => string = "renderStyles
 let remarkable = remarkable(
   "full",
   {
+    "html": true,
+    "linkify": true,
+    "xhtmlOut": true,
     "highlight": (code, lang) => {
       try {highlight(~lang, code)["value"]} catch {
       | _ => ""
@@ -218,11 +226,10 @@ let getFiles = (config, readFileSync, mode) => {
     map,
     set,
   ), variant) => {
-    let subdir = switch variant.subdirectory {
+    let directory = join(cwd(), switch variant.subdirectory {
     | Some(subdirectory) => join(config.distDirectory, subdirectory)
     | None => config.distDirectory
-    }
-    let directory = join(cwd(), subdir)
+    })
     let webpackHtml = readFileSync(. join(directory, "_source.html"), "utf8")
     setPagesPath(
       processEnv,
@@ -380,7 +387,7 @@ let getFiles = (config, readFileSync, mode) => {
           initialData->Js.Json.serializeExn->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)
         let helmet = renderStatic()
         (
-          join(config.distDirectory, serverUrl),
+          serverUrl,
           `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}</head><div id="root">${html}</div><script id="initialData" type="text/data">${initialData}</script>${webpackHtml}</html>`,
         )
       })
@@ -397,7 +404,10 @@ let getFiles = (config, readFileSync, mode) => {
             ->Map.Int.toArray
             ->Array.reduce(acc, (acc, (page, items)) =>
               acc->Map.String.set(
-                `/${subdir}/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`,
+                switch variant.subdirectory {
+                | Some(subdirectory) => `/${subdirectory}/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`
+                | None => `/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`
+                },
                 items->Js.Json.serializeExn,
               )
             )
@@ -411,7 +421,10 @@ let getFiles = (config, readFileSync, mode) => {
           ->Map.String.toArray
           ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
             sortedCollection->Map.Int.get(0)->Option.map(page => {
-              let url = `/${subdir}/api/${collectionName}/feeds/${direction}/feed.xml`
+              let url = switch variant.subdirectory {
+              | Some(subdirectory) => `/${subdirectory}/api/${collectionName}/feeds/${direction}/feed.xml`
+              | None => `/api/${collectionName}/feeds/${direction}/feed.xml`
+              }
               acc->Map.String.set(
                 url,
                 {
@@ -437,7 +450,10 @@ let getFiles = (config, readFileSync, mode) => {
           ->Map.String.toArray
           ->Array.reduce(acc, (acc, (id, item)) =>
             acc->Map.String.set(
-              `/${subdir}/api/${collectionName}/items/${id}.json`,
+              switch variant.subdirectory {
+              | Some(subdirectory) => `/${subdirectory}/api/${collectionName}/items/${id}.json`
+              | None => `/api/${collectionName}/items/${id}.json`
+              },
               item->Js.Json.serializeExn,
             )
           )
@@ -472,9 +488,10 @@ let getFiles = (config, readFileSync, mode) => {
   })
 
   files
-  ->Map.String.set("/sitemap.xml", sitemap(pages->Set.String.toArray))
+  ->Map.String.set("/${config.distDirectory}/sitemap.xml", sitemap(pages->Set.String.toArray))
   ->Map.String.toArray
   ->Array.map(((filePath, value)) => {
+    let filePath = join(config.distDirectory, filePath)
     let filePath =
       filePath->Js.String2.startsWith("/") ? filePath->Js.String2.sliceToEnd(~from=1) : filePath
     let filePath =
