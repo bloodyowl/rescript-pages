@@ -533,6 +533,12 @@ let getWebpackConfig = (config, mode: mode, entry) => {
             | None => `"${nodeUrl(config.baseUrl).pathname}"`
             },
           }),
+          inlineTranslationPlugin(
+            variant.localeFile
+            ->Option.map(readFileSync)
+            ->Option.map(Js.Json.parseExn)
+            ->Js.Null.fromOption,
+          ),
         ],
         "externals": Js.Dict.fromArray([
           ("react", "commonjs2 react"),
