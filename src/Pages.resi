@@ -48,6 +48,8 @@ type paginated<'a> = {
   items: array<'a>,
 }
 
+@bs.val external publicPath: string = "process.env.PAGES_PATH"
+
 type direction = [#asc | #desc]
 
 module Context: {
