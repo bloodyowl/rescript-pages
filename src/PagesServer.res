@@ -16,7 +16,6 @@ type dirent
 @bs.module external frontMatter: string => {"attributes": 'a, "body": string} = "front-matter"
 type config = {
   "html": bool,
-  "linkify": bool,
   "xhtmlOut": bool,
   "highlight": (string, string) => string
 }
@@ -24,10 +23,15 @@ type config = {
 external directionAsString: direction => string = "%identity"
 
 type remarkable
+type remarkablePlugin
 
 @bs.new @bs.module("remarkable")
 external remarkable: (string, config) => remarkable = "Remarkable"
 @bs.send external render: (remarkable, string) => string = "render"
+@bs.send external use: (remarkable, remarkablePlugin) => unit = "use"
+
+@bs.module
+external linkify: remarkablePlugin = "remarkable/linkify"
 
 @bs.module("highlight.js")
 external highlight: (~lang: string, string) => {"value": string} = "highlight"
@@ -56,7 +60,6 @@ let remarkable = remarkable(
   "full",
   {
     "html": true,
-    "linkify": true,
     "xhtmlOut": true,
     "highlight": (code, lang) => {
       try {highlight(~lang, code)["value"]} catch {
@@ -65,6 +68,7 @@ let remarkable = remarkable(
     },
   },
 )
+remarkable->use(linkify)
 
 let getCollectionItem = (slug, path) => {
   let file = readFileSync(path)
