@@ -492,7 +492,7 @@ let getFiles = (config, readFileSync, mode) => {
   })
 
   files
-  ->Map.String.set("/${config.distDirectory}/sitemap.xml", sitemap(pages->Set.String.toArray))
+  ->Map.String.set(`/sitemap.xml`, sitemap(pages->Set.String.toArray))
   ->Map.String.toArray
   ->Array.map(((filePath, value)) => {
     let filePath = join(config.distDirectory, filePath)
