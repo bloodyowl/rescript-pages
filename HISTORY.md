@@ -1,3 +1,9 @@
+## 0.1.23
+
+Fixes:
+
+- Fixed translation (8a2e121)
+
 ## 0.1.22
 
 Fixes:
