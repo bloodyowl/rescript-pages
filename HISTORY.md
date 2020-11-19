@@ -1,3 +1,9 @@
+## 0.1.28
+
+Fixes:
+
+- Fixed paths (589b711)
+
 ## 0.1.27
 
 Fixes:
