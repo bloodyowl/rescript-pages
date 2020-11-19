@@ -218,10 +218,11 @@ let getFiles = (config, readFileSync, mode) => {
     map,
     set,
   ), variant) => {
-    let directory = switch variant.subdirectory {
-    | Some(subdirectory) => join3(cwd(), config.distDirectory, subdirectory)
-    | None => join(cwd(), config.distDirectory)
+    let subdir = switch variant.subdirectory {
+    | Some(subdirectory) => join(config.distDirectory, subdirectory)
+    | None => config.distDirectory
     }
+    let directory = join(cwd(), subdir)
     let webpackHtml = readFileSync(. join(directory, "_source.html"), "utf8")
     setPagesPath(
       processEnv,
@@ -396,7 +397,7 @@ let getFiles = (config, readFileSync, mode) => {
             ->Map.Int.toArray
             ->Array.reduce(acc, (acc, (page, items)) =>
               acc->Map.String.set(
-                `/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`,
+                `/${subdir}/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`,
                 items->Js.Json.serializeExn,
               )
             )
@@ -410,7 +411,7 @@ let getFiles = (config, readFileSync, mode) => {
           ->Map.String.toArray
           ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
             sortedCollection->Map.Int.get(0)->Option.map(page => {
-              let url = `/api/${collectionName}/feeds/${direction}/feed.xml`
+              let url = `/${subdir}/api/${collectionName}/feeds/${direction}/feed.xml`
               acc->Map.String.set(
                 url,
                 {
@@ -436,7 +437,7 @@ let getFiles = (config, readFileSync, mode) => {
           ->Map.String.toArray
           ->Array.reduce(acc, (acc, (id, item)) =>
             acc->Map.String.set(
-              `/api/${collectionName}/items/${id}.json`,
+              `/${subdir}/api/${collectionName}/items/${id}.json`,
               item->Js.Json.serializeExn,
             )
           )
