@@ -1,5 +1,7 @@
 open Belt
 
+let smallViewport = CssJs.media("(max-width: 600px)")
+
 module Styles = {
   open CssJs
   global(.
@@ -119,8 +121,13 @@ module FeatureBlock = {
 module Home = {
   module Styles = {
     open CssJs
-    let blocks = style(.[display(flexBox), flexDirection(row), flexWrap(wrap)])
-    let block = style(.[width(33.333->pct)])
+    let blocks = style(.[
+      display(flexBox),
+      flexDirection(row),
+      flexWrap(wrap),
+      smallViewport([flexDirection(column)]),
+    ])
+    let block = style(.[width(33.333->pct), smallViewport([width(100.0->pct)])])
     let container = style(.[flexGrow(1.0)])
   }
   @react.component
@@ -155,8 +162,15 @@ module Docs = {
       flexDirection(row),
       alignItems(stretch),
       flexGrow(1.0),
+      smallViewport([flexDirection(columnReverse)]),
     ])
-    let body = style(.[flexGrow(1.0), flexShrink(1.0), display(flexBox), flexDirection(column)])
+    let body = style(.[
+      flexGrow(1.0),
+      flexShrink(1.0),
+      display(flexBox),
+      flexDirection(column),
+      padding(10->px),
+    ])
 
     let column = style(.[
       width(250->px),
@@ -232,7 +246,7 @@ module Header = {
       color("fff"->hex),
       backgroundColor("0A296A"->hex),
     ])
-    let title = style(.[fontSize(50->px)])
+    let title = style(.[fontSize(50->px), smallViewport([fontSize(18->px)])])
     let navigation = style(.[display(flexBox), flexDirection(row), alignItems(center)])
   }
   @react.component

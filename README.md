@@ -23,7 +23,7 @@ $ yarn add rescript-pages
 
 Create an entry file with a `default` export with your configuration:
 
-```rescript
+```js
 let default = Pages.make(
   App.make,
   {

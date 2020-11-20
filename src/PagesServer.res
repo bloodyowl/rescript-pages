@@ -14,7 +14,11 @@ type dirent
 @bs.module("path") external basename: (string, string) => string = "basename"
 @bs.module("path") external extname: string => string = "extname"
 @bs.module external frontMatter: string => {"attributes": 'a, "body": string} = "front-matter"
-type config = {"html": bool, "xhtmlOut": bool, "highlight": (string, string) => string}
+type config = {
+  "html": bool,
+  "xhtmlOut": bool,
+  "highlight": (string, Js.Undefined.t<string>) => string,
+}
 
 external directionAsString: direction => string = "%identity"
 
@@ -30,7 +34,9 @@ external remarkable: (string, config) => remarkable = "Remarkable"
 external linkify: remarkablePlugin = "linkify"
 
 @bs.module("highlight.js")
-external highlight: (~lang: string, string) => {"value": string} = "highlight"
+external highlight: (~lang: Js.Undefined.t<string>, string) => {"value": string} = "highlight"
+@bs.module("highlight.js")
+external highlightAuto: string => {"value": string} = "highlightAuto"
 
 type hjs
 type language
@@ -58,8 +64,12 @@ let remarkable = remarkable(
     "html": true,
     "xhtmlOut": true,
     "highlight": (code, lang) => {
-      try {highlight(~lang, code)["value"]} catch {
-      | _ => ""
+      if lang == Js.undefined {
+        code
+      } else {
+        try {highlight(~lang, code)["value"]} catch {
+        | _ => highlightAuto(code)["value"]
+        }
       }
     },
   },
@@ -518,6 +528,7 @@ let getFiles = (config, readFileSync, mode) => {
 
 type plugin
 @bs.new @bs.module external htmlPlugin: {..} => plugin = "html-webpack-plugin"
+@bs.new @bs.module external scriptPlugin: {..} => plugin = "script-ext-html-webpack-plugin"
 @bs.new @bs.module
 external inlineTranslationPlugin: Js.Null.t<Js.Json.t> => plugin =
   "inline-translations-webpack-plugin"
@@ -612,6 +623,9 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           htmlPlugin({
             "filename": `_source.html`,
             "templateContent": "",
+          }),
+          scriptPlugin({
+            "defaultAttribute": "defer",
           }),
           inlineTranslationPlugin(
             variant.localeFile
