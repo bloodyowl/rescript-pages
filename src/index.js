@@ -135,6 +135,8 @@ async function start(entry, devServerPort) {
     res.setHeader("Content-Type", type);
   }
 
+  let pathname = new URL(config.baseUrl).pathname
+
   app.use(pathname, (req, res, next) => {
     let url = req.path;
     let filePath = url.startsWith("/") ? url.slice(1) : url;
