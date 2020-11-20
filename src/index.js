@@ -135,8 +135,10 @@ async function start(entry, devServerPort) {
     res.setHeader("Content-Type", type);
   }
 
-  app.use((req, res, next) => {
-    let url = req.path;
+  let pathname = new URL(config.baseUrl).pathname
+
+  app.use(pathname, (req, res, next) => {
+    let url = path.relative(pathname, req.path);
     let filePath = url.startsWith("/") ? url.slice(1) : url;
     let normalizedFilePath = path.join(process.cwd(), config.distDirectory, filePath);
     let pathsToTry = [normalizedFilePath, normalizedFilePath + "/index.html"]
@@ -170,7 +172,7 @@ async function start(entry, devServerPort) {
   });
   let serverPort = await (devServerPort || getPort())
   app.listen(serverPort)
-  console.log(`Dev server running at: ${chalk.green(`http://localhost:${serverPort}`)}`)
+  console.log(`Dev server running at: ${chalk.green(`http://localhost:${serverPort}${pathname}`)}`)
 }
 
 async function build(entry) {
