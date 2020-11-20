@@ -135,10 +135,8 @@ async function start(entry, devServerPort) {
     res.setHeader("Content-Type", type);
   }
 
-  let pathname = new URL(config.baseUrl).pathname
-
   app.use(pathname, (req, res, next) => {
-    let url = path.relative(pathname, req.path);
+    let url = req.path;
     let filePath = url.startsWith("/") ? url.slice(1) : url;
     let normalizedFilePath = path.join(process.cwd(), config.distDirectory, filePath);
     let pathsToTry = [normalizedFilePath, normalizedFilePath + "/index.html"]
