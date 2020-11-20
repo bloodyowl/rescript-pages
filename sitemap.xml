@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  <url><loc>https:/bloodyowl.io/</loc></url>
+  <url><loc>https:/bloodyowl.io/404.html</loc></url>
+  <url><loc>https:/bloodyowl.io/docs/command-line</loc></url>
+  <url><loc>https:/bloodyowl.io/docs/consuming-content</loc></url>
+  <url><loc>https:/bloodyowl.io/docs/getting-started</loc></url>
+  <url><loc>https:/bloodyowl.io/docs/html-customization</loc></url>
+  <url><loc>https:/bloodyowl.io/docs/markdown</loc></url>
+  <url><loc>https:/bloodyowl.io/docs/styling</loc></url>
+</urlset>

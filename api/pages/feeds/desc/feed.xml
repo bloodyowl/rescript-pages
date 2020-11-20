@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+  <channel>
+    <title><![CDATA[bloodyowl]]></title>
+    <description><![CDATA[My site]]></description>
+    <link>https://bloodyowl.io</link>
+    <lastBuildDate>Thu, 19 Nov 2020 11:29:24 GMT</lastBuildDate>
+    <atom:link href="https:/bloodyowl.io/api/pages/feeds/desc/feed.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title><![CDATA[Untitled]]></title>
+      <link>https:/bloodyowl.io/bar</link>
+      <guid isPermalink="false">bar</guid>
+   </item>
+  </channel>
+</rss>
