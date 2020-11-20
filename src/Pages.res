@@ -116,7 +116,7 @@ let useUrl = () => {
   {...url, path: stripInitialPath(path, pathParse(publicPath))}
 }
 
-let join = (s1, s2) => `${s1}/${s2}`->Js.String2.replaceByRe(%re("/\/+/g"), "/")
+let join = (s1, s2) => (`${s1}/${s2}`)->Js.String2.replaceByRe(%re("/\/+/g"), "/")
 
 module Link = {
   @react.component
@@ -134,8 +134,9 @@ module Link = {
     let isActive = matchSubroutes
       ? Js.String.startsWith(href, path ++ "/") || Js.String.startsWith(href, path)
       : path === href || path ++ "/" === href
+    let href = join(publicPath, href)
     <a
-      href={join(publicPath, href)}
+      href
       className={CssJs.merge(.
         [className, isActive ? activeClassName : None]->Array.keepMap(x => x),
       )}
