@@ -1,3 +1,7 @@
+## 0.1.39
+
+Fix with URLs
+
 ## 0.1.38
 
 Various updates
