@@ -184,10 +184,16 @@ external renderStatic: unit => {
   "title": string,
 } = "renderStatic"
 
+let joinUrl = (s1, s2) =>
+  (`${s1}/${s2}`)
+  ->Js.String2.replaceByRe(%re("/:\/\//g"), "__PROTOCOL__")
+  ->Js.String2.replaceByRe(%re("/\/+/g"), "/")
+  ->Js.String2.replaceByRe(%re("/__PROTOCOL__/g"), "://")
+
 let renderRssItem = (config, variant, item: listItem, url) => {
   let link = switch variant.subdirectory {
-  | Some(subdir) => join3(config.baseUrl, subdir, url)
-  | None => join(config.baseUrl, url)
+  | Some(subdir) => joinUrl(config.baseUrl, join(subdir, url))
+  | None => joinUrl(config.baseUrl, url)
   }
   let date =
     item.date->Option.map(date => `\n      <pubDate>${date}</pubDate>`)->Option.getWithDefault("")
@@ -502,7 +508,7 @@ let getFiles = (config, readFileSync, mode) => {
         set->Set.String.union(
           prerenderedPages
           ->Map.String.keysToArray
-          ->Array.map(url => join(config.baseUrl, url))
+          ->Array.map(url => joinUrl(config.baseUrl, url))
           ->Set.String.fromArray,
         ),
       )
