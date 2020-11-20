@@ -1,7 +1,12 @@
 ---
-title: Completely over-engineered
+title: React-powered
 ---
 
-The generated website is a **Single Page Application** (or SPA for short).
+When the client boots, there's **no subsequent page reload**, it only fetches the missing data to navigate to the next page (but it works without JS!).
 
-That means that when the client boots, there's not subsequent page reload, it only fetches the missing data.
+```reason
+@react.component
+let make = (~url, ~config) => {
+  /* your app */
+}
+```

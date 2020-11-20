@@ -23,6 +23,7 @@ module Styles = {
       ]),
     ],
   )
+  global(. "#root", [minHeight(100.0->vh), display(flexBox), flexDirection(column)])
 }
 
 module WidthContainer = {
@@ -33,12 +34,70 @@ module WidthContainer = {
       maxWidth(1000->px),
       marginLeft(auto),
       marginRight(auto),
+      flexGrow(1.0),
     ])
   }
   @react.component
   let make = (~children) => {
     <div className=Styles.container> children </div>
   }
+}
+
+module MarkdownBody = {
+  module Styles = {
+    open CssJs
+    let text = style(.[
+      selector(
+        "pre",
+        [
+          padding2(~v=10->px, ~h=20->px),
+          backgroundColor("F4F7F8"->hex),
+          overflowX(auto),
+          unsafe("WebkitOverflowScrolling", "touch"),
+          fontSize(16->px),
+          borderLeftWidth(2->px),
+          borderLeftColor("46515B"->hex),
+          borderLeftStyle(solid),
+        ],
+      ),
+      selector(
+        "code",
+        [
+          fontFamilies([
+            #custom("SFMono-Regular"),
+            #custom("Consolas"),
+            #custom("Liberation Mono"),
+            #custom("Menlo"),
+            #custom("Courier"),
+            #custom("monospace"),
+          ]),
+          fontSize(0.85->em),
+          lineHeight(#abs(1.)),
+        ],
+      ),
+      selector(".hljs-keyword", [color("DA6BB5"->hex)]),
+      selector(".hljs-constructor", [color("DD792B"->hex)]),
+      selector(".hljs-identifier", [color("1E9EA7"->hex)]),
+      selector(".hljs-module-identifier", [color("C84682"->hex)]),
+      selector(".hljs-string", [color("3BA1C8"->hex)]),
+      selector(".hljs-comment", [color("aaa"->hex)]),
+      selector(".hljs-operator", [color("DA6BB5"->hex)]),
+      selector(".hljs-attribute", [color("4CB877"->hex)]),
+      selector("table", [width(100.->pct), textAlign(center)]),
+      selector("table thead th", [backgroundColor("E4EBEE"->hex), padding2(~v=10->px, ~h=zero)]),
+      selector(
+        "blockquote",
+        [
+          opacity(0.6),
+          borderLeft(4->px, solid, "46515B"->hex),
+          margin(zero),
+          padding2(~h=20->px, ~v=zero),
+        ],
+      ),
+    ])
+  }
+  @react.component
+  let make = (~body) => <div className=Styles.text dangerouslySetInnerHTML={{"__html": body}} />
 }
 
 module FeatureBlock = {
@@ -52,7 +111,7 @@ module FeatureBlock = {
   let make = (~title, ~text) => {
     <div className=Styles.container>
       <h2 className=Styles.title> {title->React.string} </h2>
-      <div className=Styles.text dangerouslySetInnerHTML={{"__html": text}} />
+      <div className=Styles.text> <MarkdownBody body=text /> </div>
     </div>
   }
 }
@@ -62,15 +121,17 @@ module Home = {
     open CssJs
     let blocks = style(.[display(flexBox), flexDirection(row), flexWrap(wrap)])
     let block = style(.[width(33.333->pct)])
+    let container = style(.[flexGrow(1.0)])
   }
   @react.component
   let make = () => {
     let blocks = Pages.useCollection("features", ~direction=#asc)
-    <div>
+    <div className=Styles.container>
       <WidthContainer>
         <div className=Styles.blocks>
           {switch blocks {
-          | NotAsked | Loading | Done(Error(_)) => React.null
+          | NotAsked | Loading => <Pages.ActivityIndicator />
+          | Done(Error(_)) => <Pages.ErrorIndicator />
           | Done(Ok({items})) =>
             items
             ->Array.map(block =>
@@ -82,134 +143,169 @@ module Home = {
           }}
         </div>
       </WidthContainer>
-      <Pages.Link href="/post/foo"> {"View my super post >"->React.string} </Pages.Link>
-      <br />
-      <Pages.Link href="/posts"> {"View post list >"->React.string} </Pages.Link>
     </div>
   }
 }
 
-module PostList = {
+module Docs = {
+  module Styles = {
+    open CssJs
+    let container = style(.[
+      display(flexBox),
+      flexDirection(row),
+      alignItems(stretch),
+      flexGrow(1.0),
+    ])
+    let body = style(.[flexGrow(1.0), flexShrink(1.0), display(flexBox), flexDirection(column)])
+
+    let column = style(.[
+      width(250->px),
+      boxSizing(borderBox),
+      padding2(~v=20->px, ~h=10->px),
+      flexGrow(0.0),
+      flexShrink(0.0),
+      display(flexBox),
+      flexDirection(column),
+    ])
+    let link = style(.[color(currentColor), textDecoration(none), display(block), padding(10->px)])
+    let activeLink = style(.[fontWeight(bold)])
+  }
   @react.component
-  let make = (~page=1) => {
-    let posts = Pages.useCollection("posts", ~page)
-    <>
-      {switch posts {
-      | NotAsked | Loading => "Loading..."->React.string
-      | Done(Error(_)) => "Error"->React.string
-      | Done(Ok({items, hasPreviousPage, hasNextPage})) => <>
-          <h1>
-            <Pages.Head>
-              <title> {(`Posts, page ${page->Int.toString} - my website`)->React.string} </title>
-            </Pages.Head>
-          </h1>
-          <ul> {items->Array.map(item => {
-              <li key=item.slug>
-                <Pages.Link href={`/post/${item.slug}`}> {item.title->React.string} </Pages.Link>
-              </li>
-            })->React.array} </ul>
-          {hasPreviousPage
-            ? <Pages.Link href={`/posts/${(page - 1)->Int.toString}`}>
-                {"Previous page"->React.string}
-              </Pages.Link>
-            : React.null}
-          {hasNextPage
-            ? <Pages.Link href={`/posts/${(page + 1)->Int.toString}`}>
-                {"Next page"->React.string}
-              </Pages.Link>
-            : React.null}
-        </>
-      }}
-    </>
+  let make = (~slug) => {
+    let item = Pages.useItem("docs", ~id=slug)
+    let list = Pages.useCollection("docs", ~direction=#asc)
+    <WidthContainer>
+      <div className=Styles.container>
+        <div className=Styles.column>
+          {switch list {
+          | NotAsked | Loading => <Pages.ActivityIndicator />
+          | Done(Error(_)) => <Pages.ErrorIndicator />
+          | Done(Ok({items})) => <>
+              {items
+              ->Array.map(item =>
+                <Pages.Link
+                  href={`/docs/${item.slug}`}
+                  className=Styles.link
+                  activeClassName=Styles.activeLink
+                  key={item.slug}>
+                  {item.title->React.string}
+                </Pages.Link>
+              )
+              ->React.array}
+            </>
+          }}
+        </div>
+        <div className=Styles.body>
+          {switch item {
+          | NotAsked | Loading => <Pages.ActivityIndicator />
+          | Done(Error(_)) => <Pages.ErrorIndicator />
+          | Done(Ok(item)) => <>
+              <h1> {item.title->React.string} </h1> <MarkdownBody body=item.body />
+            </>
+          }}
+        </div>
+      </div>
+    </WidthContainer>
   }
 }
 
-module Page = {
+module Spacer = {
   @react.component
-  let make = (~page) => {
-    let _posts = Pages.useItem("pages", ~id=page)
-    <div />
-  }
-}
-
-module Post = {
-  @react.component
-  let make = (~post) => {
-    let post = Pages.useItem("posts", ~id=post)
-    <div>
-      <Pages.Link href="/"> {"< Go back to the homepage"->React.string} </Pages.Link>
-      {switch post {
-      | NotAsked | Loading => "Loading..."->React.string
-      | Done(Error(_)) => "Error"->React.string
-      | Done(Ok(post)) => <>
-          <h1>
-            <Pages.Head>
-              <title> {(`${post.title} - my website`)->React.string} </title>
-              <meta name="description" value={post.title} />
-            </Pages.Head>
-            {post.title->React.string}
-          </h1>
-          {"Contents:"->React.string}
-          <div dangerouslySetInnerHTML={{"__html": post.body}} />
-        </>
-      }}
-    </div>
-  }
+  let make = (~width="10px", ~height="10px") =>
+    <div style={ReactDOM.Style.make(~width, ~height, ~flexShrink="0", ~flexGrow="0", ())} />
 }
 
 module Header = {
   module Styles = {
     open CssJs
-    let titleLink = style(.[color(currentColor), textDecoration(none)])
+    let resetLink = style(.[color(currentColor), textDecoration(none)])
+    let activeLink = style(.[fontWeight(bold)])
     let header = style(.[
-      textAlign(center),
       padding(40->px),
-      paddingTop(150->px),
-      paddingBottom(150->px),
+      paddingTop(20->px),
+      paddingBottom(20->px),
       margin(zero),
+      display(flexBox),
+      flexDirection(row),
+      alignItems(center),
+      justifyContent(spaceBetween),
       color("fff"->hex),
       backgroundColor("0A296A"->hex),
     ])
     let title = style(.[fontSize(50->px)])
+    let navigation = style(.[display(flexBox), flexDirection(row), alignItems(center)])
   }
   @react.component
   let make = () => {
     <div className=Styles.header>
-      <Pages.Link href="/" className=Styles.titleLink>
-        <h1 className=Styles.title> {"ReScript Pages"->React.string} </h1>
+      <Pages.Link href="/" className=Styles.resetLink>
+        <h1 className=Styles.title> {Pages.tr("ReScript Pages")} </h1>
       </Pages.Link>
+      <div className=Styles.navigation>
+        <Pages.Link href="/" className=Styles.resetLink activeClassName=Styles.activeLink>
+          {Pages.tr("Home")}
+        </Pages.Link>
+        <Spacer width="20px" />
+        <Pages.Link
+          href="/docs/getting-started"
+          matchHref="/docs"
+          className=Styles.resetLink
+          activeClassName=Styles.activeLink
+          matchSubroutes=true>
+          {Pages.tr("Docs")}
+        </Pages.Link>
+        <Spacer width="20px" />
+        <a href="https://github.com/bloodyowl/rescript-pages" className=Styles.resetLink>
+          {Pages.tr("GitHub")}
+        </a>
+      </div>
+    </div>
+  }
+}
+
+module Footer = {
+  module Styles = {
+    open CssJs
+    let container = style(.[
+      backgroundColor("222"->hex),
+      color("fff"->hex),
+      textAlign(center),
+      padding(20->px),
+      fontSize(14->px),
+    ])
+  }
+
+  @react.component
+  let make = () => {
+    <div className=Styles.container>
+      {"Copyright 2020 - Matthias Le Brun"->ReasonReact.string}
     </div>
   }
 }
 
 module App = {
+  module Styles = {
+    open CssJs
+    let container = style(.[display(flexBox), flexDirection(column), flexGrow(1.0)])
+  }
   @react.component
   let make = (~url as {ReasonReact.Router.path: path}, ~config as _) => {
-    <div>
+    <div className=Styles.container>
       <Pages.Head> <style> {"html { font-family: sans-serif }"->React.string} </style> </Pages.Head>
       <Header />
       {switch path {
-      | list{} => <Home />
-      | list{"post", post} => <Post post />
-      | list{"posts"} => <PostList />
-      | list{"posts", page} => <PostList page={Int.fromString(page)->Option.getWithDefault(1)} />
+      | list{} => <> <Home /> </>
+      | list{"docs", slug} => <> <Docs slug /> </>
       | list{"404.html"} => <div> {"Page not found..."->React.string} </div>
-      | list{page} => <Page page />
       | _ => <div> {"Page not found..."->React.string} </div>
       }}
+      <Footer />
     </div>
   }
 }
 
-let getUrlsToPrerender = ({Pages.getAll: getAll, getPages}) =>
-  Array.concatMany([
-    ["/"],
-    getAll("pages")->Array.map(slug => `/${slug}`),
-    getAll("posts")->Array.map(slug => `/post/${slug}`),
-    ["/posts"],
-    getPages("posts")->Array.map(page => `/posts/${page->Int.toString}`),
-    ["404.html"],
-  ])
+let getUrlsToPrerender = ({Pages.getAll: getAll}) =>
+  Array.concatMany([["/"], getAll("docs")->Array.map(slug => `/docs/${slug}`), ["404.html"]])
 
 let default = Pages.make(
   App.make,
@@ -223,12 +319,6 @@ let default = Pages.make(
     variants: [
       {
         subdirectory: None,
-        localeFile: None,
-        contentDirectory: "contents",
-        getUrlsToPrerender: getUrlsToPrerender,
-      },
-      {
-        subdirectory: Some("en"),
         localeFile: None,
         contentDirectory: "contents",
         getUrlsToPrerender: getUrlsToPrerender,

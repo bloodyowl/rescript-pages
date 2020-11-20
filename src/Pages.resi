@@ -51,9 +51,14 @@ type paginated<'a> = {
   items: array<'a>,
 }
 
-@bs.val external publicPath: string = "process.env.PAGES_PATH"
+@bs.val external variantBasePath: string = "process.env.PAGES_PATH"
+@bs.val external basePath: string = "process.env.PAGES_ROOT"
 
-let join: (string, string) => string
+@bs.val external t: string => string = "__"
+@bs.val external tr: string => React.element = "__"
+
+let makeVariantUrl: string => string
+let makeBaseUrl: string => string
 
 type direction = [#asc | #desc]
 
@@ -73,6 +78,7 @@ module Link: {
   @react.component
   let make: (
     ~href: string,
+    ~matchHref: string=?,
     ~className: string=?,
     ~style: ReactDOM.Style.t=?,
     ~activeClassName: string=?,
@@ -85,6 +91,16 @@ module Link: {
 module Head: {
   @react.component
   let make: (~children: React.element) => React.element
+}
+
+module ActivityIndicator: {
+  @react.component
+  let make: (~color: string=?, ~size: int=?, ~strokeWidth: int=?, unit) => React.element
+}
+
+module ErrorIndicator: {
+  @react.component
+  let make: unit => React.element
 }
 
 let useCollection: (
@@ -121,7 +137,7 @@ type app = {
     "config": config,
     "children": React.element,
   }>,
-  emotion: emotion
+  emotion: emotion,
 }
 
 let make: (React.component<{"config": config, "url": ReasonReactRouter.url}>, config) => app

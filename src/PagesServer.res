@@ -14,11 +14,7 @@ type dirent
 @bs.module("path") external basename: (string, string) => string = "basename"
 @bs.module("path") external extname: string => string = "extname"
 @bs.module external frontMatter: string => {"attributes": 'a, "body": string} = "front-matter"
-type config = {
-  "html": bool,
-  "xhtmlOut": bool,
-  "highlight": (string, string) => string
-}
+type config = {"html": bool, "xhtmlOut": bool, "highlight": (string, string) => string}
 
 external directionAsString: direction => string = "%identity"
 
@@ -74,7 +70,7 @@ let getCollectionItem = (slug, path) => {
   let file = readFileSync(path)
   let parsed = frontMatter(file)
   let meta = parsed["attributes"]
-    let truncationIndex = parsed["body"]->Js.String2.indexOf("<!--truncate-->")
+  let truncationIndex = parsed["body"]->Js.String2.indexOf("<!--truncate-->")
   let truncationIndex = truncationIndex == -1 ? 250 : truncationIndex
   let body = render(remarkable, parsed["body"])
   let summary = render(remarkable, parsed["body"]->Js.String2.slice(~from=0, ~to_=truncationIndex))
@@ -231,16 +227,20 @@ type url = {pathname: string}
 type processEnv
 @bs.val external processEnv: processEnv = "process.env"
 @bs.set external setPagesPath: (processEnv, string) => unit = "PAGES_PATH"
+@bs.set external setPagesRoot: (processEnv, string) => unit = "PAGES_ROOT"
 
 let getFiles = (config, readFileSync, mode) => {
   let (files, pages) = config.variants->Array.reduce((Map.String.empty, Set.String.empty), ((
     map,
     set,
   ), variant) => {
-    let directory = join(cwd(), switch variant.subdirectory {
-    | Some(subdirectory) => join(config.distDirectory, subdirectory)
-    | None => config.distDirectory
-    })
+    let directory = join(
+      cwd(),
+      switch variant.subdirectory {
+      | Some(subdirectory) => join(config.distDirectory, subdirectory)
+      | None => config.distDirectory
+      },
+    )
     let webpackHtml = readFileSync(. join(directory, "_source.html"), "utf8")
     setPagesPath(
       processEnv,
@@ -249,6 +249,7 @@ let getFiles = (config, readFileSync, mode) => {
       | None => nodeUrl(config.baseUrl).pathname
       },
     )
+    setPagesRoot(processEnv, nodeUrl(config.baseUrl).pathname)
     switch requireFresh(join(directory, "_entry.js"))["default"] {
     | Some({app, provider, container, emotion}) =>
       let server = createEmotionServer(emotion->getEmotionCache)
@@ -273,7 +274,8 @@ let getFiles = (config, readFileSync, mode) => {
           collection,
           collectionItems,
         )) => {
-          let items = collectionItems
+          let items =
+            collectionItems
             ->Map.String.map(((item, _listItem)) => item)
             ->Map.String.valuesToArray
             ->Array.map(item => (item.slug, item))
@@ -414,12 +416,11 @@ let getFiles = (config, readFileSync, mode) => {
           collection
           ->Map.String.toArray
           ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
-            sortedCollection
-            ->Map.Int.toArray
-            ->Array.reduce(acc, (acc, (page, items)) =>
+            sortedCollection->Map.Int.toArray->Array.reduce(acc, (acc, (page, items)) =>
               acc->Map.String.set(
                 switch variant.subdirectory {
-                | Some(subdirectory) => `/${subdirectory}/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`
+                | Some(subdirectory) =>
+                  `/${subdirectory}/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`
                 | None => `/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`
                 },
                 items->Js.Json.serializeExn,
@@ -436,7 +437,8 @@ let getFiles = (config, readFileSync, mode) => {
           ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
             sortedCollection->Map.Int.get(0)->Option.map(page => {
               let url = switch variant.subdirectory {
-              | Some(subdirectory) => `/${subdirectory}/api/${collectionName}/feeds/${direction}/feed.xml`
+              | Some(subdirectory) =>
+                `/${subdirectory}/api/${collectionName}/feeds/${direction}/feed.xml`
               | None => `/api/${collectionName}/feeds/${direction}/feed.xml`
               }
               acc->Map.String.set(
@@ -460,9 +462,7 @@ let getFiles = (config, readFileSync, mode) => {
         store.items
         ->Map.String.toArray
         ->Array.reduce(Map.String.empty, (acc, (collectionName, collection)) =>
-          collection
-          ->Map.String.toArray
-          ->Array.reduce(acc, (acc, (id, item)) =>
+          collection->Map.String.toArray->Array.reduce(acc, (acc, (id, item)) =>
             acc->Map.String.set(
               switch variant.subdirectory {
               | Some(subdirectory) => `/${subdirectory}/api/${collectionName}/items/${id}.json`
@@ -509,7 +509,7 @@ let getFiles = (config, readFileSync, mode) => {
     let filePath =
       filePath->Js.String2.startsWith("/") ? filePath->Js.String2.sliceToEnd(~from=1) : filePath
     let filePath =
-      extname(filePath) != "" ?
+      extname(filePath) != ""
         ? filePath
         : filePath ++ (filePath->Js.String2.endsWith("/") ? "" : "/") ++ "index.html"
     (filePath, value)
@@ -538,9 +538,7 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "target": "node",
         "resolve": {
           "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
-          "alias": Js.Dict.fromArray([
-            ("emotion", join(dirname, "emotion.js")),
-          ]),
+          "alias": Js.Dict.fromArray([("emotion", join(dirname, "emotion.js"))]),
         },
         "output": {
           "libraryTarget": Js.Undefined.return("commonjs2"),
@@ -562,6 +560,7 @@ let getWebpackConfig = (config, mode: mode, entry) => {
             | Some(subdir) => `"${join(nodeUrl(config.baseUrl).pathname, subdir)}"`
             | None => `"${nodeUrl(config.baseUrl).pathname}"`
             },
+            "process.env.PAGES_ROOT": `"${nodeUrl(config.baseUrl).pathname}"`,
           }),
           inlineTranslationPlugin(
             variant.localeFile
@@ -585,9 +584,7 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "target": "web",
         "resolve": {
           "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
-          "alias": Js.Dict.fromArray([
-            ("emotion", join(dirname, "emotion.js")),
-          ]),
+          "alias": Js.Dict.fromArray([("emotion", join(dirname, "emotion.js"))]),
         },
         "output": {
           "libraryTarget": Js.Undefined.empty,
@@ -610,6 +607,7 @@ let getWebpackConfig = (config, mode: mode, entry) => {
             | Some(subdir) => `"${join(nodeUrl(config.baseUrl).pathname, subdir)}"`
             | None => `"${nodeUrl(config.baseUrl).pathname}"`
             },
+            "process.env.PAGES_ROOT": `"${nodeUrl(config.baseUrl).pathname}"`,
           }),
           htmlPlugin({
             "filename": `_source.html`,

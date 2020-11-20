@@ -101,7 +101,8 @@ let pathParse = str =>
     |> List.fromArray
   }
 
-@bs.val external publicPath: string = "process.env.PAGES_PATH"
+@bs.val external variantBasePath: string = "process.env.PAGES_PATH"
+@bs.val external basePath: string = "process.env.PAGES_ROOT"
 
 let rec stripInitialPath = (path, sourcePath) => {
   switch (path, sourcePath) {
@@ -113,15 +114,26 @@ let rec stripInitialPath = (path, sourcePath) => {
 let useUrl = () => {
   let serverUrl = React.useContext(ServerUrlContext.context)
   let {path} as url = ReasonReactRouter.useUrl(~serverUrl?, ())
-  {...url, path: stripInitialPath(path, pathParse(publicPath))}
+  {...url, path: stripInitialPath(path, pathParse(variantBasePath))}
 }
 
-let join = (s1, s2) => (`${s1}/${s2}`)->Js.String2.replaceByRe(%re("/\/+/g"), "/")
+let join = (s1, s2) =>
+  (`${s1}/${s2}`)
+  ->Js.String2.replaceByRe(%re("/:\/\//g"), "__PROTOCOL__")
+  ->Js.String2.replaceByRe(%re("/\/+/g"), "/")
+  ->Js.String2.replaceByRe(%re("/__PROTOCOL__/g"), "://")
+
+@bs.val external t: string => string = "__"
+@bs.val external tr: string => React.element = "__"
+
+let makeVariantUrl = join(variantBasePath)
+let makeBaseUrl = join(basePath)
 
 module Link = {
   @react.component
   let make = (
     ~href,
+    ~matchHref=?,
     ~className=?,
     ~style=?,
     ~activeClassName=?,
@@ -131,10 +143,11 @@ module Link = {
   ) => {
     let url = useUrl()
     let path = "/" ++ String.concat("/", url.path)
+    let compareHref = matchHref->Option.getWithDefault(href)
     let isActive = matchSubroutes
-      ? Js.String.startsWith(href, path ++ "/") || Js.String.startsWith(href, path)
-      : path === href || path ++ "/" === href
-    let href = join(publicPath, href)
+      ? Js.String.startsWith(compareHref, path ++ "/") || Js.String.startsWith(compareHref, path)
+      : path === compareHref || path ++ "/" === compareHref
+    let href = makeVariantUrl(href)
     <a
       href
       className={CssJs.merge(.
@@ -158,6 +171,66 @@ module Link = {
 module Head = {
   @react.component @bs.module("react-helmet")
   external make: (~children: React.element) => React.element = "Helmet"
+}
+
+module ActivityIndicator = {
+  module Styles = {
+    open CssJs
+    let container = style(.[display(flexBox), margin(auto)])
+  }
+
+  @react.component
+  let make = (~color="currentColor", ~size=32, ~strokeWidth=2, ()) => {
+    <div className=Styles.container>
+      <svg
+        width={Int.toString(size)}
+        height={Int.toString(size)}
+        viewBox="0 0 38 38"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlnsXlink="http://www.w3.org/1999/xlink"
+        stroke=color
+        style={ReactDOM.Style.make(~overflow="visible", ())}
+        ariaLabel="Loading"
+        role="alert"
+        ariaBusy=true>
+        <g fill="none" fillRule="evenodd">
+          <g transform="translate(1 1)" strokeWidth={strokeWidth->Int.toString}>
+            <circle strokeOpacity=".5" cx="18" cy="18" r="18" />
+            <path d="M36 18c0-9.94-8.06-18-18-18">
+              <animateTransform
+                attributeName="transform"
+                type_="rotate"
+                from="0 18 18"
+                to_="360 18 18"
+                dur="1s"
+                repeatCount="indefinite"
+              />
+            </path>
+          </g>
+        </g>
+      </svg>
+    </div>
+  }
+}
+
+module ErrorIndicator = {
+  module Styles = {
+    open CssJs
+    let container = style(.[
+      display(flexBox),
+      alignItems(center),
+      justifyContent(center),
+      margin(auto),
+    ])
+    let text = style(.[fontSize(22->px), fontWeight(bold), textAlign(center)])
+  }
+
+  @react.component
+  let make = () => {
+    <div className=Styles.container>
+      <div className=Styles.text> {tr(`An error occured 😕`)} </div>
+    </div>
+  }
 }
 
 module Context = {
@@ -233,7 +306,7 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
           )),
         )),
       })
-      let url = join(publicPath, `api/${collection}/pages/${direction}/${page->Int.toString}.json`)
+      let url = makeVariantUrl(`api/${collection}/pages/${direction}/${page->Int.toString}.json`)
       let future =
         Request.make(~url, ~responseType=Text, ())
         ->Future.mapError(~propagateCancel=true, mapError)
@@ -289,7 +362,7 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
           collection->Option.getWithDefault(Map.String.empty)->Map.String.set(id, status),
         )),
       })
-      let url = join(publicPath, `/api/${collection}/items/${id}.json`)
+      let url = makeVariantUrl(`/api/${collection}/items/${id}.json`)
       let future =
         Request.make(~url, ~responseType=Text, ())
         ->Future.mapError(~propagateCancel=true, mapError)
