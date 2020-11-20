@@ -1,3 +1,9 @@
+## 0.1.34
+
+Changes:
+
+- Handle public path correctly (e08efb9)
+
 ## 0.1.33
 
 Changes:
