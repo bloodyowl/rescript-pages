@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
   <channel>
-    <title><![CDATA[bloodyowl]]></title>
-    <description><![CDATA[My site]]></description>
-    <link>https://bloodyowl.io</link>
-    <lastBuildDate>Fri, 20 Nov 2020 17:42:29 GMT</lastBuildDate>
-    <atom:link href="https:/bloodyowl.io/api/docs/feeds/desc/feed.xml" rel="self" type="application/rss+xml"/>
+    <title><![CDATA[ReScript Pages]]></title>
+    <description><![CDATA[A static website generator]]></description>
+    <link>https://bloodyowl.github.io/rescript-pages</link>
+    <lastBuildDate>Fri, 20 Nov 2020 17:45:11 GMT</lastBuildDate>
+    <atom:link href="https:/bloodyowl.github.io/rescript-pages/api/docs/feeds/desc/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
       <title><![CDATA[Command line]]></title>
-      <link>https:/bloodyowl.io/docs/command-line</link>
+      <link>https:/bloodyowl.github.io/rescript-pages/docs/command-line</link>
       <guid isPermalink="false">command-line</guid>
    </item>
     <item>
       <title><![CDATA[Styling]]></title>
-      <link>https:/bloodyowl.io/docs/styling</link>
+      <link>https:/bloodyowl.github.io/rescript-pages/docs/styling</link>
       <guid isPermalink="false">styling</guid>
    </item>
     <item>
       <title><![CDATA[HTML customization]]></title>
-      <link>https:/bloodyowl.io/docs/html-customization</link>
+      <link>https:/bloodyowl.github.io/rescript-pages/docs/html-customization</link>
       <guid isPermalink="false">html-customization</guid>
    </item>
     <item>
       <title><![CDATA[Markdown]]></title>
-      <link>https:/bloodyowl.io/docs/markdown</link>
+      <link>https:/bloodyowl.github.io/rescript-pages/docs/markdown</link>
       <guid isPermalink="false">markdown</guid>
    </item>
     <item>
       <title><![CDATA[Consuming content]]></title>
-      <link>https:/bloodyowl.io/docs/consuming-content</link>
+      <link>https:/bloodyowl.github.io/rescript-pages/docs/consuming-content</link>
       <guid isPermalink="false">consuming-content</guid>
    </item>
     <item>
       <title><![CDATA[Getting started]]></title>
-      <link>https:/bloodyowl.io/docs/getting-started</link>
+      <link>https:/bloodyowl.github.io/rescript-pages/docs/getting-started</link>
       <guid isPermalink="false">getting-started</guid>
    </item>
   </channel>
