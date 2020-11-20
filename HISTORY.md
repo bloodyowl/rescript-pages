@@ -1,3 +1,9 @@
+## 0.1.33
+
+Changes:
+
+- Various updates (b98471a)
+
 ## 0.1.32
 
 Fixes:
