@@ -74,20 +74,27 @@ let getCollectionItem = (slug, path) => {
   let file = readFileSync(path)
   let parsed = frontMatter(file)
   let meta = parsed["attributes"]
+    let truncationIndex = parsed["body"]->Js.String2.indexOf("<!--truncate-->")
+  let truncationIndex = truncationIndex == -1 ? 250 : truncationIndex
+  let body = render(remarkable, parsed["body"])
+  let summary = render(remarkable, parsed["body"]->Js.String2.slice(~from=0, ~to_=truncationIndex))
   let item = {
-    slug: slug,
+    slug: meta->Js.Dict.get("slug")->Option.getWithDefault(slug),
+    filename: slug,
     title: meta->Js.Dict.get("title")->Option.getWithDefault("Untitled"),
     date: meta->Js.Dict.get("date")->Option.map(Js.Date.toUTCString),
     draft: meta->Js.Dict.get("draft")->Option.getWithDefault(false),
     meta: meta,
-    body: render(remarkable, parsed["body"]),
+    body: body,
   }
   let listItem = {
-    slug: slug,
+    slug: meta->Js.Dict.get("slug")->Option.getWithDefault(slug),
+    filename: slug,
     title: meta->Js.Dict.get("title")->Option.getWithDefault("Untitled"),
     date: meta->Js.Dict.get("date")->Option.map(Js.Date.toUTCString),
     draft: meta->Js.Dict.get("draft")->Option.getWithDefault(false),
     meta: meta,
+    summary: summary,
   }
   (item, listItem)
 }
@@ -266,8 +273,11 @@ let getFiles = (config, readFileSync, mode) => {
           collection,
           collectionItems,
         )) => {
-          let items = collectionItems->Map.String.map(((item, _listItem)) => item)
-
+          let items = collectionItems
+            ->Map.String.map(((item, _listItem)) => item)
+            ->Map.String.valuesToArray
+            ->Array.map(item => (item.slug, item))
+            ->Map.String.fromArray
           let listItems =
             collectionItems->Map.String.valuesToArray->Array.map(((_item, listItem)) => listItem)
           let descendendingListItems = listItems->Array.reverse

@@ -1,5 +1,6 @@
 ---
 title: Hello from the super post test
+slug: test
 ---
 
 Foo bar baz **new stuff**

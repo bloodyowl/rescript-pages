@@ -35,14 +35,17 @@ let mapError = error =>
 
 type listItem = {
   slug: string,
+  filename: string,
   title: string,
   date: option<string>,
   draft: bool,
   meta: Js.Dict.t<string>,
+  summary: string,
 }
 
 type item = {
   slug: string,
+  filename: string,
   title: string,
   date: option<string>,
   draft: bool,

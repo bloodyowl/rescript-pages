@@ -93,6 +93,7 @@ async function start(entry, devServerPort) {
       aggregateTimeout: 300,
       poll: undefined
     }, (error, stats) => {
+      try {
       if (error) {
         reject(error);
       } else {
@@ -115,6 +116,8 @@ async function start(entry, devServerPort) {
           }
           isFirstRun = false
         }
+      }} catch(err) {
+        console.error(err)
       }
     })
   )
@@ -147,9 +150,14 @@ async function start(entry, devServerPort) {
             let wsSuffix = (pathToTry.endsWith(".html") ? suffix : "");
             let currentPath = pathToTry
             fs.readFile(currentPath, (err, data) => {
-              if (err) { } else {
-                setMime(currentPath, res)
-                res.status(200).end(wsSuffix != "" ? String(data) + wsSuffix : data);
+              try {
+                if (err) { } else {
+                  setMime(currentPath, res)
+                  res.status(200).end(wsSuffix != "" ? String(data) + wsSuffix : data);
+                }
+              } catch (err) {
+                console.error(err)
+                res.status(500).end(null)
               }
             })
           }
@@ -186,6 +194,7 @@ async function build(entry) {
   console.log("2/2 Prerendering pages")
   prerenderForConfig(config, "production")
   console.log("Done!")
+  return config
 }
 
 exports.start = start
