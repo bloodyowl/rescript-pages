@@ -305,7 +305,10 @@ module App = {
   @react.component
   let make = (~url as {ReasonReact.Router.path: path}, ~config as _) => {
     <div className=Styles.container>
-      <Pages.Head> <style> {"html { font-family: sans-serif }"->React.string} </style> </Pages.Head>
+      <Pages.Head>
+        <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport" />
+        <style> {"html { font-family: sans-serif }"->React.string} </style>
+      </Pages.Head>
       <Header />
       {switch path {
       | list{} => <> <Home /> </>
