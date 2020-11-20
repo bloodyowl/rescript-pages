@@ -310,11 +310,11 @@ let getUrlsToPrerender = ({Pages.getAll: getAll}) =>
 let default = Pages.make(
   App.make,
   {
-    siteTitle: "bloodyowl",
-    siteDescription: "My site",
+    siteTitle: "ReScript Pages",
+    siteDescription: "A static website generator",
     distDirectory: "dist",
-    baseUrl: "https://bloodyowl.io",
-    staticsDirectory: Some("public"),
+    baseUrl: "https://bloodyowl.github.io/rescript-pages",
+    staticsDirectory: None,
     paginateBy: 2,
     variants: [
       {
