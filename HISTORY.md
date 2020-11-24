@@ -1,3 +1,9 @@
+## 0.2.1
+
+Features:
+
+- Fix server URL (c539f4e)
+
 ## 0.2.0
 
 Features:
