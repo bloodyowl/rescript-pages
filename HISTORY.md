@@ -1,3 +1,9 @@
+## 0.2.2
+
+Features:
+
+- Fix server URL (8e929de)
+
 ## 0.2.1
 
 Features:
