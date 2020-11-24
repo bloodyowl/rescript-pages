@@ -326,13 +326,17 @@ let getFiles = (config, readFileSync, mode) => {
         getAll: Store.getAll(store),
         getPages: Store.getPages(store),
       })
-      ->Array.map(url =>
+      ->Array.map(url => (
         switch variant.subdirectory {
         | Some(subdir) => join3(nodeUrl(config.baseUrl).pathname, subdir, url)
         | None => join(nodeUrl(config.baseUrl).pathname, url)
-        }
-      )
-      ->Array.map(serverUrl => {
+        },
+        switch variant.subdirectory {
+        | Some(subdir) => join(subdir, url)
+        | None => url
+        },
+      ))
+      ->Array.map(((serverUrl, filePath)) => {
         let context: Context.t = {
           lists: store.lists->Map.String.map(collection =>
             collection->Map.String.map(sortedCollection =>
@@ -422,7 +426,7 @@ let getFiles = (config, readFileSync, mode) => {
           initialData->Js.Json.serializeExn->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)
         let helmet = renderStatic()
         (
-          serverUrl,
+          filePath,
           `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}</head><div id="root">${html}</div><script id="initialData" type="text/data">${initialData}</script>${webpackHtml}</html>`,
         )
       })
