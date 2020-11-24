@@ -1,3 +1,9 @@
+## 0.2.0
+
+Features:
+
+- Add static mode (25faf5d)
+
 ## 0.1.39
 
 Fix with URLs
