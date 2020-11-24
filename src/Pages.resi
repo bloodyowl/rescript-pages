@@ -10,7 +10,10 @@ type variant = {
   getUrlsToPrerender: urlStore => array<string>,
 }
 
+type mode = SPA | Static
+
 type config = {
+  mode: mode,
   siteTitle: string,
   siteDescription: string,
   distDirectory: string,

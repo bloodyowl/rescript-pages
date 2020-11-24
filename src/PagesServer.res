@@ -257,7 +257,10 @@ let getFiles = (config, readFileSync, mode) => {
       | None => config.distDirectory
       },
     )
-    let webpackHtml = readFileSync(. join(directory, "_source.html"), "utf8")
+    let webpackHtml = switch config.mode {
+    | SPA => readFileSync(. join(directory, "_source.html"), "utf8")
+    | Static => ""
+    }
     setPagesPath(
       processEnv,
       switch variant.subdirectory {

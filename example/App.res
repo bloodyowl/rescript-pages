@@ -328,6 +328,7 @@ let default = Pages.make(
   App.make,
   {
     siteTitle: "ReScript Pages",
+    mode: SPA,
     siteDescription: "A static website generator",
     distDirectory: "dist",
     baseUrl: "https://bloodyowl.github.io/rescript-pages",
