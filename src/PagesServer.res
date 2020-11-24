@@ -328,8 +328,8 @@ let getFiles = (config, readFileSync, mode) => {
       })
       ->Array.map(url =>
         switch variant.subdirectory {
-        | Some(value) => join(value, url)
-        | None => url
+        | Some(subdir) => join3(nodeUrl(config.baseUrl).pathname, subdir, url)
+        | None => join(nodeUrl(config.baseUrl).pathname, url)
         }
       )
       ->Array.map(serverUrl => {
