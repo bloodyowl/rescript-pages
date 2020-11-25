@@ -55,6 +55,7 @@ let default = Pages.make(
   {
     siteTitle: "bloodyowl", /* Default title */
     siteDescription: "My site", /* Default description */
+    mode: SPA, /* SPA (with JS) or Static (without JS) */
     distDirectory: "dist", /* Where to write the built file */
     baseUrl: "https://bloodyowl.io", /* Where the website lives */
     staticsDirectory: Some("public"), /* Assets to copy to the `distDirectory` root */
