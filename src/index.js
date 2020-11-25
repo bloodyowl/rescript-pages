@@ -5,181 +5,227 @@ let chalk = require("chalk");
 let mime = require("mime");
 let PagesServer = require("./PagesServer.bs");
 
-global.__ = localeKey => localeKey
+global.__ = (localeKey) => localeKey;
 
 function createWebsocketServer(port) {
   let WebSocket = require("ws");
   let server = new WebSocket.Server({
     port: port,
-  })
+  });
   let openedConnections = [];
-  server.on("connection", ws => {
-    openedConnections.push(ws)
+  server.on("connection", (ws) => {
+    openedConnections.push(ws);
     ws.on("close", () => {
-      openedConnections = openedConnections.filter(item => item != ws)
-    })
-  })
+      openedConnections = openedConnections.filter((item) => item != ws);
+    });
+  });
   return {
     send: (message) => {
-      openedConnections.forEach(ws => ws.send(message))
-    }
-  }
+      openedConnections.forEach((ws) => ws.send(message));
+    },
+  };
 }
 
 function requireFresh(path) {
-  delete require.cache[path]
-  return require(path)
+  delete require.cache[path];
+  return require(path);
 }
 
 function prerenderForConfig(config, mode) {
-  PagesServer.getFiles(config, fs.readFileSync, mode)
-    .forEach(([filePath, value]) => {
-      fs.mkdirSync(path.dirname(path.join(process.cwd(), filePath)), { recursive: true });
-      fs.writeFileSync(path.join(process.cwd(), filePath), value, "utf8")
-    })
+  PagesServer.getFiles(config, fs.readFileSync, mode).forEach(
+    ([filePath, value]) => {
+      fs.mkdirSync(path.dirname(path.join(process.cwd(), filePath)), {
+        recursive: true,
+      });
+      fs.writeFileSync(path.join(process.cwd(), filePath), value, "utf8");
+    }
+  );
 }
 
 async function start(entry, devServerPort) {
-  let { default: { config } } = require(entry)
-  let express = require("express")
-  let getPort = require("get-port")
+  let {
+    default: { config },
+  } = require(entry);
+  let express = require("express");
+  let getPort = require("get-port");
   let app = express();
   let { createFsFromVolume, Volume } = require("memfs");
   let volume = new Volume();
   let outputFileSystem = createFsFromVolume(volume);
   // rewrite `fs` from now on
-  fs = outputFileSystem
+  fs = outputFileSystem;
   outputFileSystem.join = path.join.bind(path);
   let chokidar = require("chokidar");
   let watchedDirectories = new Set();
 
   function onContentChange(_) {
-    console.log("Content changed")
-    prerenderForConfig(config, "development")
-    ws.send("change")
+    console.log("Content changed");
+    prerenderForConfig(config, "development");
+    ws.send("change");
   }
 
   let watchDirectories = () => {
-    watchedDirectories.forEach(watcher => watcher.off("all", onContentChange))
-    watchedDirectories = new Set()
-    config.variants.forEach(item => {
-      let watcher = chokidar.watch(path.join(process.cwd(), item.contentDirectory), {
-        ignored: /^\./, persistent: true,
-        ignoreInitial: true,
-      });
-      watcher.on("all", onContentChange)
-      watchedDirectories.add(watcher)
-    })
-  }
+    watchedDirectories.forEach((watcher) =>
+      watcher.off("all", onContentChange)
+    );
+    watchedDirectories = new Set();
+    config.variants.forEach((item) => {
+      let watcher = chokidar.watch(
+        path.join(process.cwd(), item.contentDirectory),
+        {
+          ignored: /^\./,
+          persistent: true,
+          ignoreInitial: true,
+        }
+      );
+      watcher.on("all", onContentChange);
+      watchedDirectories.add(watcher);
+    });
+  };
 
-  let compiler = webpack(PagesServer.getWebpackConfig(config, "development", entry))
+  let compiler = webpack(
+    PagesServer.getWebpackConfig(config, "development", entry)
+  );
   // patch web compilers to write on memory
-  compiler.compilers.forEach(compiler => {
+  compiler.compilers.forEach((compiler) => {
     if (compiler.options.target == "web") {
       compiler.outputFileSystem = outputFileSystem;
     }
-  })
+  });
 
-  let port = await getPort()
-  let ws = createWebsocketServer(port)
+  let port = await getPort();
+  let ws = createWebsocketServer(port);
 
-  let suffix = `<script>new WebSocket("ws://localhost:${port}").onmessage = function() {location.reload(true)}</script>`
+  let suffix = `<script>new WebSocket("ws://localhost:${port}").onmessage = function() {location.reload(true)}</script>`;
 
-  let isFirstRun = true
+  let isFirstRun = true;
 
-  console.log("Bundling assets")
+  function debounce(func, timeout) {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        func(...args);
+      }, timeout);
+    };
+  }
+
+  let onWebpackChange = debounce(() => {
+    prerenderForConfig(config, "development");
+    watchDirectories();
+    if (!isFirstRun) {
+      ws.send("change");
+    }
+    isFirstRun = false;
+  }, 2000);
+
+  console.log("Bundling assets");
   await new Promise((resolve, reject) =>
-    compiler.watch({
-      aggregateTimeout: 300,
-      poll: undefined
-    }, (error, stats) => {
-      try {
-      if (error) {
-        reject(error);
-      } else {
-        if (stats.hasErrors()) {
-          let errors = stats.toJson().errors.join("\n");
-          reject(errors);
-        } else {
-          resolve()
-          // reload config
-          let entryExports = requireFresh(entry)
-          if (entryExports.default == undefined) {
-            // multiple build occuring, wait for the next one
-            return
+    compiler.watch(
+      {
+        aggregateTimeout: 300,
+        poll: undefined,
+      },
+      (error, stats) => {
+        try {
+          if (error) {
+            reject(error);
+          } else {
+            if (stats.hasErrors()) {
+              let errors = stats.toJson().errors.join("\n");
+              reject(errors);
+            } else {
+              resolve();
+              // reload config
+              let entryExports = requireFresh(entry);
+              if (entryExports.default == undefined) {
+                // multiple build occuring, wait for the next one
+                return;
+              }
+              config = entryExports.default.config;
+              onWebpackChange();
+            }
           }
-          config = entryExports.default.config
-          prerenderForConfig(config, "development")
-          watchDirectories()
-          if (!isFirstRun) {
-            ws.send("change")
-          }
-          isFirstRun = false
+        } catch (err) {
+          console.error(err);
         }
-      }} catch(err) {
-        console.error(err)
       }
-    })
-  )
+    )
+  );
 
-  watchDirectories()
+  watchDirectories();
 
   function setMime(path, res) {
     if (res.getHeader("Content-Type")) {
-      return
+      return;
     }
-    let type = mime.getType(path)
+    let type = mime.getType(path);
     if (!type) {
-      return
+      return;
     }
     res.setHeader("Content-Type", type);
   }
 
-  let pathname = new URL(config.baseUrl).pathname
+  let pathname = new URL(config.baseUrl).pathname;
 
   app.use(pathname, (req, res, next) => {
     let url = req.path;
     let filePath = url.startsWith("/") ? url.slice(1) : url;
-    let normalizedFilePath = path.join(process.cwd(), config.distDirectory, filePath);
-    let pathsToTry = [normalizedFilePath, normalizedFilePath + "/index.html"]
-    let returned = false
+    let normalizedFilePath = path.join(
+      process.cwd(),
+      config.distDirectory,
+      filePath
+    );
+    let pathsToTry = [normalizedFilePath, normalizedFilePath + "/index.html"];
+    let returned = false;
     for (pathToTry of pathsToTry) {
       if (!returned) {
         try {
-          let stat = fs.statSync(pathToTry)
+          let stat = fs.statSync(pathToTry);
           if (stat.isFile()) {
-            returned = true
-            let wsSuffix = (pathToTry.endsWith(".html") ? suffix : "");
-            let currentPath = pathToTry
+            returned = true;
+            let wsSuffix = pathToTry.endsWith(".html") ? suffix : "";
+            let currentPath = pathToTry;
             fs.readFile(currentPath, (err, data) => {
               try {
-                if (err) { } else {
-                  setMime(currentPath, res)
-                  res.status(200).end(wsSuffix != "" ? String(data) + wsSuffix : data);
+                if (err) {
+                } else {
+                  setMime(currentPath, res);
+                  res
+                    .status(200)
+                    .end(wsSuffix != "" ? String(data) + wsSuffix : data);
                 }
               } catch (err) {
-                console.error(err)
-                res.status(500).end(null)
+                console.error(err);
+                res.status(500).end(null);
               }
-            })
+            });
           }
-        } catch (_) { }
+        } catch (_) {}
       }
     }
     if (!returned) {
-      res.status(404).end(null)
+      res.status(404).end(null);
     }
   });
-  let serverPort = await (devServerPort || getPort())
-  app.listen(serverPort)
-  console.log(`Dev server running at: ${chalk.green(`http://localhost:${serverPort}${pathname}`)}`)
+  let serverPort = await (devServerPort || getPort());
+  app.listen(serverPort);
+  console.log(
+    `Dev server running at: ${chalk.green(
+      `http://localhost:${serverPort}${pathname}`
+    )}`
+  );
 }
 
 async function build(entry) {
-  let { default: { config } } = require(entry)
-  console.log("1/2 Bundling assets")
+  let {
+    default: { config },
+  } = require(entry);
+  console.log("1/2 Bundling assets");
   await new Promise((resolve, reject) => {
-    let compiler = webpack(PagesServer.getWebpackConfig(config, "production", entry))
+    let compiler = webpack(
+      PagesServer.getWebpackConfig(config, "production", entry)
+    );
     compiler.run((error, stats) => {
       if (error) {
         reject(error);
@@ -188,16 +234,16 @@ async function build(entry) {
           let errors = stats.toJson().errors.join("\n");
           reject(errors);
         } else {
-          resolve()
+          resolve();
         }
       }
-    })
-  })
-  console.log("2/2 Prerendering pages")
-  prerenderForConfig(config, "production")
-  console.log("Done!")
-  return config
+    });
+  });
+  console.log("2/2 Prerendering pages");
+  prerenderForConfig(config, "production");
+  console.log("Done!");
+  return config;
 }
 
-exports.start = start
-exports.build = build
+exports.start = start;
+exports.build = build;
