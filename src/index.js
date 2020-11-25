@@ -101,10 +101,10 @@ async function start(entry, devServerPort) {
   let isFirstRun = true;
 
   function debounce(func, timeout) {
-    let timeout;
+    let timeoutId;
     return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
         func(...args);
       }, timeout);
     };
