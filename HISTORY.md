@@ -1,3 +1,9 @@
+## 0.2.3
+
+Changes:
+
+- Debounce webpack changes (4997c38)
+
 ## 0.2.2
 
 Features:
