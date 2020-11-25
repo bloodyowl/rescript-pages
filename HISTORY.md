@@ -1,3 +1,9 @@
+## 0.2.4
+
+Fixes:
+
+- Fix typo (8a05654)
+
 ## 0.2.3
 
 Changes:
