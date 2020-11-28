@@ -1,3 +1,9 @@
+## 0.2.12
+
+Fixes:
+
+- Fix RSS feed (b86d6a6)
+
 ## 0.2.11
 
 Fixes:
