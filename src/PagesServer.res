@@ -135,6 +135,7 @@ let paginate = (array, paginateBy) => {
       {
         hasPreviousPage: chunkIndex > 1,
         hasNextPage: chunkIndex < chunkTotal,
+        totalCount: array->Array.length,
         items: array->Array.slice(~offset=(chunkIndex - 1) * paginateBy, ~len=paginateBy),
       },
     )
@@ -145,6 +146,7 @@ let all = array => {
   {
     hasPreviousPage: false,
     hasNextPage: false,
+    totalCount: array->Array.length,
     items: array,
   }
 }

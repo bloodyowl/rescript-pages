@@ -59,6 +59,7 @@ type item = {
 type paginated<'a> = {
   hasPreviousPage: bool,
   hasNextPage: bool,
+  totalCount: int,
   items: array<'a>,
 }
 
