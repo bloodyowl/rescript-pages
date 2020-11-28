@@ -205,7 +205,30 @@ async function start(entry, devServerPort) {
       }
     }
     if (!returned) {
-      res.status(404).end(null);
+      let normalizedFilePath = path.join(
+        process.cwd(),
+        config.distDirectory,
+        "404.html"
+      );
+      let stat = fs.statSync(pathToTry);
+      if (stat.isFile()) {
+        fs.readFile(normalizedFilePath, (err, data) => {
+          try {
+            if (err) {
+            } else {
+              setMime(currentPath, res);
+              res
+                .status(404)
+                .end(wsSuffix != "" ? String(data) + wsSuffix : data);
+            }
+          } catch (err) {
+            console.error(err);
+            res.status(500).end(null);
+          }
+        });
+      } else {
+        res.status(404).end(null);
+      }
     }
   });
   let serverPort = await (devServerPort || getPort());
