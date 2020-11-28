@@ -1,3 +1,9 @@
+## 0.2.5
+
+Fixes:
+
+- Return 404 if available (2675405)
+
 ## 0.2.4
 
 Fixes:
