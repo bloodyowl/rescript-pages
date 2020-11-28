@@ -1,3 +1,9 @@
+## 0.2.13
+
+Changes:
+
+- Helmet doesn't need to be a peer dep anymore (c2d82a8)
+
 ## 0.2.12
 
 Fixes:
