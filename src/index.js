@@ -213,6 +213,7 @@ async function start(entry, devServerPort) {
       try {
         let stat = fs.statSync(normalizedFilePath);
         if (stat.isFile()) {
+          let wsSuffix = pathToTry.endsWith(".html") ? suffix : "";
           fs.readFile(normalizedFilePath, (err, data) => {
             try {
               if (err) {
