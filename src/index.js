@@ -117,7 +117,7 @@ async function start(entry, devServerPort) {
       ws.send("change");
     }
     isFirstRun = false;
-  }, 2000);
+  }, 1000);
 
   console.log("Bundling assets");
   await new Promise((resolve, reject) =>
