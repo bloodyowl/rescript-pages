@@ -1,3 +1,9 @@
+## 0.2.1O
+
+Fixes:
+
+- Fix error test (101297d)
+
 ## 0.2.9
 
 Fixes:
