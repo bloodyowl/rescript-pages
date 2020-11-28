@@ -1,3 +1,9 @@
+## 0.2.9
+
+Fixes:
+
+- Don't hydrate on error pages (8e58459)
+
 ## 0.2.8
 
 Fixes:
