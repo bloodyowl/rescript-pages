@@ -4,37 +4,37 @@
     <title><![CDATA[ReScript Pages]]></title>
     <description><![CDATA[A static website generator]]></description>
     <link>https://bloodyowl.github.io/rescript-pages</link>
-    <lastBuildDate>Sat, 28 Nov 2020 14:48:18 GMT</lastBuildDate>
-    <atom:link href="https:/bloodyowl.github.io/rescript-pages/api/docs/feeds/asc/feed.xml" rel="self" type="application/rss+xml"/>
+    <lastBuildDate>Sat, 28 Nov 2020 16:56:38 GMT</lastBuildDate>
+    <atom:link href="https://bloodyowl.github.io/rescript-pages/api/docs/feeds/asc/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
       <title><![CDATA[Getting started]]></title>
       <link>https://bloodyowl.github.io/rescript-pages/rescript-pages/docs/getting-started</link>
-      <guid isPermalink="false">getting-started</guid>
+      <guid isPermaLink="false">getting-started</guid>
    </item>
     <item>
       <title><![CDATA[Consuming content]]></title>
       <link>https://bloodyowl.github.io/rescript-pages/rescript-pages/docs/consuming-content</link>
-      <guid isPermalink="false">consuming-content</guid>
+      <guid isPermaLink="false">consuming-content</guid>
    </item>
     <item>
       <title><![CDATA[Markdown]]></title>
       <link>https://bloodyowl.github.io/rescript-pages/rescript-pages/docs/markdown</link>
-      <guid isPermalink="false">markdown</guid>
+      <guid isPermaLink="false">markdown</guid>
    </item>
     <item>
       <title><![CDATA[HTML customization]]></title>
       <link>https://bloodyowl.github.io/rescript-pages/rescript-pages/docs/html-customization</link>
-      <guid isPermalink="false">html-customization</guid>
+      <guid isPermaLink="false">html-customization</guid>
    </item>
     <item>
       <title><![CDATA[Styling]]></title>
       <link>https://bloodyowl.github.io/rescript-pages/rescript-pages/docs/styling</link>
-      <guid isPermalink="false">styling</guid>
+      <guid isPermaLink="false">styling</guid>
    </item>
     <item>
       <title><![CDATA[Command line]]></title>
       <link>https://bloodyowl.github.io/rescript-pages/rescript-pages/docs/command-line</link>
-      <guid isPermalink="false">command-line</guid>
+      <guid isPermaLink="false">command-line</guid>
    </item>
   </channel>
 </rss>
