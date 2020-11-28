@@ -210,23 +210,27 @@ async function start(entry, devServerPort) {
         config.distDirectory,
         "404.html"
       );
-      let stat = fs.statSync(normalizedFilePath);
-      if (stat.isFile()) {
-        fs.readFile(normalizedFilePath, (err, data) => {
-          try {
-            if (err) {
-            } else {
-              setMime(normalizedFilePath, res);
-              res
-                .status(404)
-                .end(wsSuffix != "" ? String(data) + wsSuffix : data);
+      try {
+        let stat = fs.statSync(normalizedFilePath);
+        if (stat.isFile()) {
+          fs.readFile(normalizedFilePath, (err, data) => {
+            try {
+              if (err) {
+              } else {
+                setMime(normalizedFilePath, res);
+                res
+                  .status(404)
+                  .end(wsSuffix != "" ? String(data) + wsSuffix : data);
+              }
+            } catch (err) {
+              console.error(err);
+              res.status(500).end(null);
             }
-          } catch (err) {
-            console.error(err);
-            res.status(500).end(null);
-          }
-        });
-      } else {
+          });
+        } else {
+          res.status(404).end(null);
+        }
+      } catch (err) {
         res.status(404).end(null);
       }
     }
