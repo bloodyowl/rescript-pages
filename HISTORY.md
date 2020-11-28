@@ -1,3 +1,9 @@
+## 0.2.7
+
+Fixes:
+
+- Guard statSync (572c82f)
+
 ## 0.2.6
 
 Fixes:
