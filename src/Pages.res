@@ -405,17 +405,21 @@ module App = {
   }
 }
 
+type bootMode = [#hydrate | #render]
+@bs.val external pagesBootMode: bootMode = "window.PAGES_BOOT_MODE"
+
 let start = (app, config) => {
   let root = ReactDOM.querySelector("#root")
   let initialData =
     ReactDOM.querySelector("#initialData")
     ->Option.map(textContent)
     ->Option.map(Js.Json.deserializeUnsafe)
-  switch (root, initialData) {
-  | (Some(root), Some(initialData)) =>
+  switch (root, initialData, pagesBootMode) {
+  | (Some(root), Some(initialData), #hydrate) =>
     ReactDOM.hydrate(<Context config value=initialData> <App app config /> </Context>, root)
-  | (Some(root), None) => ReactDOM.render(<Context config> <App app config /> </Context>, root)
-  | (None, _) => Js.Console.error(`Can't find the app's root container`)
+  | (Some(root), None, #hydrate | #render) | (Some(root), Some(_), #render) =>
+    ReactDOM.render(<Context config> <App app config /> </Context>, root)
+  | (None, _, _) => Js.Console.error(`Can't find the app's root container`)
   }
 }
 

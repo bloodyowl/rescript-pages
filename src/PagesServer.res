@@ -425,9 +425,13 @@ let getFiles = (config, readFileSync, mode) => {
         let initialData =
           initialData->Js.Json.serializeExn->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)
         let helmet = renderStatic()
+        let errorPageMarker =
+          filePath->Js.String2.endsWith("/404.html")
+            ? `<script>window.PAGES_BOOT_MODE="render";</script>`
+            : `<script>window.PAGES_BOOT_MODE="hydrate";</script>`
         (
           filePath,
-          `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}</head><div id="root">${html}</div><script id="initialData" type="text/data">${initialData}</script>${webpackHtml}</html>`,
+          `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}${errorPageMarker}</head><div id="root">${html}</div><script id="initialData" type="text/data">${initialData}</script>${webpackHtml}</html>`,
         )
       })
       ->Map.String.fromArray
