@@ -79,26 +79,52 @@ remarkable->use(linkify)
 let getCollectionItem = (slug, path) => {
   let file = readFileSync(path)
   let parsed = frontMatter(file)
-  let meta = parsed["attributes"]
+  let meta: Js.Dict.t<Js.Json.t> = parsed["attributes"]
   let truncationIndex = parsed["body"]->Js.String2.indexOf("<!--truncate-->")
   let truncationIndex = truncationIndex == -1 ? 250 : truncationIndex
   let body = render(remarkable, parsed["body"])
   let summary = render(remarkable, parsed["body"]->Js.String2.slice(~from=0, ~to_=truncationIndex))
   let item = {
-    slug: meta->Js.Dict.get("slug")->Option.getWithDefault(slug),
+    slug: meta
+    ->Js.Dict.get("slug")
+    ->Option.flatMap(Js.Json.decodeString)
+    ->Option.getWithDefault(slug),
     filename: slug,
-    title: meta->Js.Dict.get("title")->Option.getWithDefault("Untitled"),
-    date: meta->Js.Dict.get("date")->Option.map(Js.Date.toUTCString),
-    draft: meta->Js.Dict.get("draft")->Option.getWithDefault(false),
+    title: meta
+    ->Js.Dict.get("title")
+    ->Option.flatMap(Js.Json.decodeString)
+    ->Option.getWithDefault("Untitled"),
+    date: meta
+    ->Js.Dict.get("date")
+    ->Option.map(Js.String.make)
+    ->Option.map(Js.Date.fromString)
+    ->Option.map(Js.Date.toUTCString),
+    draft: meta
+    ->Js.Dict.get("draft")
+    ->Option.flatMap(Js.Json.decodeBoolean)
+    ->Option.getWithDefault(false),
     meta: meta,
     body: body,
   }
   let listItem = {
-    slug: meta->Js.Dict.get("slug")->Option.getWithDefault(slug),
+    slug: meta
+    ->Js.Dict.get("slug")
+    ->Option.flatMap(Js.Json.decodeString)
+    ->Option.getWithDefault(slug),
     filename: slug,
-    title: meta->Js.Dict.get("title")->Option.getWithDefault("Untitled"),
-    date: meta->Js.Dict.get("date")->Option.map(Js.Date.toUTCString),
-    draft: meta->Js.Dict.get("draft")->Option.getWithDefault(false),
+    title: meta
+    ->Js.Dict.get("title")
+    ->Option.flatMap(Js.Json.decodeString)
+    ->Option.getWithDefault("Untitled"),
+    date: meta
+    ->Js.Dict.get("date")
+    ->Option.map(Js.String.make)
+    ->Option.map(Js.Date.fromString)
+    ->Option.map(Js.Date.toUTCString),
+    draft: meta
+    ->Js.Dict.get("draft")
+    ->Option.flatMap(Js.Json.decodeBoolean)
+    ->Option.getWithDefault(false),
     meta: meta,
     summary: summary,
   }

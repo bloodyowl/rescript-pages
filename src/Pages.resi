@@ -34,7 +34,7 @@ type listItem = {
   title: string,
   date: option<string>,
   draft: bool,
-  meta: Js.Dict.t<string>,
+  meta: Js.Dict.t<Js.Json.t>,
   summary: string,
 }
 
@@ -44,7 +44,7 @@ type item = {
   title: string,
   date: option<string>,
   draft: bool,
-  meta: Js.Dict.t<string>,
+  meta: Js.Dict.t<Js.Json.t>,
   body: string,
 }
 
