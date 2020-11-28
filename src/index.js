@@ -210,13 +210,13 @@ async function start(entry, devServerPort) {
         config.distDirectory,
         "404.html"
       );
-      let stat = fs.statSync(pathToTry);
+      let stat = fs.statSync(normalizedFilePath);
       if (stat.isFile()) {
         fs.readFile(normalizedFilePath, (err, data) => {
           try {
             if (err) {
             } else {
-              setMime(currentPath, res);
+              setMime(normalizedFilePath, res);
               res
                 .status(404)
                 .end(wsSuffix != "" ? String(data) + wsSuffix : data);
