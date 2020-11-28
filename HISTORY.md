@@ -1,3 +1,10 @@
+## 0.3.0
+
+Changes:
+
+- Breaking: Make meta a Js.Json.t dict (4dbd074)
+- Less aggressive debounce on webpack change (afe84bd)
+
 ## 0.2.13
 
 Changes:
