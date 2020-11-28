@@ -1,3 +1,9 @@
+## 0.2.11
+
+Fixes:
+
+- Add `totalCount` (5f9bed2)
+
 ## 0.2.10
 
 Fixes:
