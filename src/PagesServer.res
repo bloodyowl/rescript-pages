@@ -202,7 +202,7 @@ let renderRssItem = (config, variant, item: listItem, url) => {
   `<item>
       <title><![CDATA[${item.title}]]></title>
       <link>${link}</link>
-      <guid isPermalink="false">${item.slug}</guid>${date}
+      <guid isPermaLink="false">${item.slug}</guid>${date}
    </item>`
 }
 
@@ -214,7 +214,7 @@ let wrapRssFeed = (config, feedUrl, items) => {
     <description><![CDATA[${config.siteDescription}]]></description>
     <link>${config.baseUrl}</link>
     <lastBuildDate>${Js.Date.make()->Js.Date.toUTCString}</lastBuildDate>
-    <atom:link href="${join(
+    <atom:link href="${joinUrl(
     config.baseUrl,
     feedUrl,
   )}" rel="self" type="application/rss+xml"/>
