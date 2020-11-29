@@ -1,3 +1,9 @@
+## 0.3.1
+
+Features:
+
+- Add Redirect component (2b906d0)
+
 ## 0.3.0
 
 Changes:
