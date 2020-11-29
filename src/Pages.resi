@@ -90,6 +90,7 @@ module Link: {
     ~activeClassName: string=?,
     ~activeStyle: ReactDOM.Style.t=?,
     ~matchSubroutes: bool=?,
+    ~title: string=?,
     ~children: React.element,
   ) => React.element
 }

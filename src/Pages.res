@@ -145,6 +145,7 @@ module Link = {
     ~activeClassName=?,
     ~activeStyle=?,
     ~matchSubroutes=false,
+    ~title=?,
     ~children,
   ) => {
     let url = useUrl()
@@ -156,6 +157,7 @@ module Link = {
     let href = makeVariantUrl(href)
     <a
       href
+      ?title
       className={CssJs.merge(.
         [className, isActive ? activeClassName : None]->Array.keepMap(x => x),
       )}
