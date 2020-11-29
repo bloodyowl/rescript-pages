@@ -1,3 +1,9 @@
+## 0.3.2
+
+Features:
+
+- Add getAllItems (8e79a9a)
+
 ## 0.3.1
 
 Features:
