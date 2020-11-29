@@ -340,6 +340,11 @@ let default = Pages.make(
         localeFile: None,
         contentDirectory: "contents",
         getUrlsToPrerender: getUrlsToPrerender,
+        getRedirectMap: Some(
+          _ => {
+            Js.Dict.fromArray([("old_url", "new_url")])
+          },
+        ),
       },
     ],
   },

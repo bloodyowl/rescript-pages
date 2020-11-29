@@ -471,6 +471,36 @@ let getFiles = (config, readFileSync, mode) => {
       })
       ->Map.String.fromArray
 
+      let redirects = switch variant.getRedirectMap {
+      | Some(getRedirectMap) =>
+        getRedirectMap({
+          getAll: Store.getAll(store),
+          getAllItems: Store.getAllItems(store),
+          getPages: Store.getPages(store),
+        })
+      | None => Js.Dict.empty()
+      }
+      ->Js.Dict.entries
+      ->Array.map(((fromUrl, toUrl)) => (
+        switch variant.subdirectory {
+        | Some(subdir) => join(subdir, fromUrl)
+        | None => fromUrl
+        },
+        switch variant.subdirectory {
+        | Some(subdir) => join(subdir, toUrl)
+        | None => toUrl
+        },
+      ))
+      ->Array.map(((fromUrl, toUrl)) => {
+        let html = ReactDOMServer.renderToStaticMarkup(<Redirect url=toUrl />)
+        let helmet = renderStatic()
+        (
+          fromUrl,
+          `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}</head><div id="root">${html}</div></html>`,
+        )
+      })
+      ->Map.String.fromArray
+
       let lists =
         store.lists
         ->Map.String.toArray
@@ -542,6 +572,7 @@ let getFiles = (config, readFileSync, mode) => {
               lists->Map.String.toArray,
               items->Map.String.toArray,
               feeds->Map.String.toArray,
+              redirects->Map.String.toArray,
             ]),
           ),
           (_, a, b) =>

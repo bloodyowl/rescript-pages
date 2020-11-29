@@ -29,6 +29,7 @@ type variant = {
   localeFile: option<string>,
   contentDirectory: string,
   getUrlsToPrerender: urlStore => array<string>,
+  getRedirectMap: option<urlStore => Js.Dict.t<string>>,
 }
 
 type mode = SPA | Static

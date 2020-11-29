@@ -66,6 +66,9 @@ let default = Pages.make(
         localeFile: None, /* JSON file containing locales */
         contentDirectory: "contents", /* Where to find markdown contents */
         getUrlsToPrerender: getUrlsToPrerender,
+        getRedirectMap: Some(_ =>
+          Js.Dict.fromArray([("old-url", "new-url")])
+        ),
       },
     ],
   },
