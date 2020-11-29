@@ -1,3 +1,9 @@
+## 0.4.0
+
+Features:
+
+- Add redirect map support (373f629)
+
 ## 0.3.2
 
 Features:
