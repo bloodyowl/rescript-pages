@@ -4116,10 +4116,10 @@ rescript-request@^1.0.2:
   dependencies:
     rescript-future "^1.0.4"
 
-rescript-test@^0.6.1:
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/rescript-test/-/rescript-test-0.6.1.tgz#27e020c338524d90de93c093ea03fe8e93bdc4f7"
-  integrity sha512-0I7DJal2tMBct+zv6gVQC37bIc63NaaThUiQCQVEa1nrziH8ua4SLJhDYro8xgYTtzjihSmv/XfGWAPY531hEw==
+rescript-test@^0.6.2:
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/rescript-test/-/rescript-test-0.6.2.tgz#9bbb6f97b1adaf5d0029977a11dd540e2eb28915"
+  integrity sha512-/5X5rXNR9bjgBxj/ZzJmsfjGZhCZmJKNMMUoUuWsbNTuAmoBvtlCEBEzKOD0FOHtFnNmpWkE/hrDUMkuPgCbRg==
   dependencies:
     cors "^2.8.5"
     esm "^3.2.25"
