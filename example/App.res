@@ -332,7 +332,7 @@ let default = Pages.make(
     siteDescription: "A static website generator",
     distDirectory: "dist",
     baseUrl: "https://bloodyowl.github.io/rescript-pages",
-    staticsDirectory: None,
+    staticsDirectory: Some("statics"),
     paginateBy: 2,
     variants: [
       {

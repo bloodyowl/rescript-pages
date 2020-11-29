@@ -25,6 +25,9 @@ jobs:
       - name: Build website
         run: bin/pages build example/App.bs.js
 
+      - name: Test website output
+        run: retest test/*.bs.js
+
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
