@@ -1,3 +1,9 @@
+## 0.5.0
+
+Features:
+
+- Support ESM (70332ea)
+
 ## 0.4.0
 
 Features:
