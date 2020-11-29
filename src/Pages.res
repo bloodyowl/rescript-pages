@@ -237,6 +237,13 @@ module ErrorIndicator = {
   }
 }
 
+module Redirect = {
+  @react.component
+  let make = (~url) => {
+    <Head> <meta httpEquiv="refresh" content={`0;URL=${url}`} /> </Head>
+  }
+}
+
 module Context = {
   type t = {
     lists: Map.String.t<Map.String.t<Map.Int.t<AsyncData.t<result<paginated<listItem>, error>>>>>,

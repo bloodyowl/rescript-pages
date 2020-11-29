@@ -107,6 +107,11 @@ module ErrorIndicator: {
   let make: unit => React.element
 }
 
+module Redirect: {
+  @react.component
+  let make: (~url: string) => React.element
+}
+
 let useCollection: (
   ~page: int=?,
   ~direction: direction=?,
