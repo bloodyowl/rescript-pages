@@ -189,6 +189,12 @@ module Store = {
     ->Option.map(Map.String.keysToArray)
     ->Option.getWithDefault([])
   }
+  let getAllItems = (store: values, collection) => {
+    store.items
+    ->Map.String.get(collection)
+    ->Option.map(Map.String.valuesToArray)
+    ->Option.getWithDefault([])
+  }
   let getPages = (store: values, collection) => {
     store.lists
     ->Map.String.get(collection)
@@ -352,6 +358,7 @@ let getFiles = (config, readFileSync, mode) => {
       let itemUsageMap = MutableMap.String.make()
       let prerenderedPages = variant.getUrlsToPrerender({
         getAll: Store.getAll(store),
+        getAllItems: Store.getAllItems(store),
         getPages: Store.getPages(store),
       })
       ->Array.map(url => (

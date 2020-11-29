@@ -1,7 +1,28 @@
 open Belt
 
+type listItem = {
+  slug: string,
+  filename: string,
+  title: string,
+  date: option<string>,
+  draft: bool,
+  meta: Js.Dict.t<Js.Json.t>,
+  summary: string,
+}
+
+type item = {
+  slug: string,
+  filename: string,
+  title: string,
+  date: option<string>,
+  draft: bool,
+  meta: Js.Dict.t<Js.Json.t>,
+  body: string,
+}
+
 type urlStore = {
   getAll: string => array<string>,
+  getAllItems: string => array<item>,
   getPages: string => array<int>,
 }
 
@@ -35,26 +56,6 @@ let mapError = error =>
   | #NetworkRequestFailed => NetworkRequestFailed
   | #Timeout => Timeout
   }
-
-type listItem = {
-  slug: string,
-  filename: string,
-  title: string,
-  date: option<string>,
-  draft: bool,
-  meta: Js.Dict.t<Js.Json.t>,
-  summary: string,
-}
-
-type item = {
-  slug: string,
-  filename: string,
-  title: string,
-  date: option<string>,
-  draft: bool,
-  meta: Js.Dict.t<Js.Json.t>,
-  body: string,
-}
 
 type paginated<'a> = {
   hasPreviousPage: bool,

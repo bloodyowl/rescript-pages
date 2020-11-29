@@ -1,5 +1,26 @@
+type listItem = {
+  slug: string,
+  filename: string,
+  title: string,
+  date: option<string>,
+  draft: bool,
+  meta: Js.Dict.t<Js.Json.t>,
+  summary: string,
+}
+
+type item = {
+  slug: string,
+  filename: string,
+  title: string,
+  date: option<string>,
+  draft: bool,
+  meta: Js.Dict.t<Js.Json.t>,
+  body: string,
+}
+
 type urlStore = {
   getAll: string => array<string>,
+  getAllItems: string => array<item>,
   getPages: string => array<int>,
 }
 
@@ -27,26 +48,6 @@ type error =
   | EmptyResponse
   | Timeout
   | NetworkRequestFailed
-
-type listItem = {
-  slug: string,
-  filename: string,
-  title: string,
-  date: option<string>,
-  draft: bool,
-  meta: Js.Dict.t<Js.Json.t>,
-  summary: string,
-}
-
-type item = {
-  slug: string,
-  filename: string,
-  title: string,
-  date: option<string>,
-  draft: bool,
-  meta: Js.Dict.t<Js.Json.t>,
-  body: string,
-}
 
 type paginated<'a> = {
   hasPreviousPage: bool,
