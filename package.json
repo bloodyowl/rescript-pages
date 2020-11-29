@@ -28,6 +28,7 @@
     "copy-webpack-plugin": "^6.3.0",
     "create-emotion": "^10.0.27",
     "create-emotion-server": "^10.0.27",
+    "esm": "^3.2.25",
     "express": "^4.17.1",
     "front-matter": "^4.0.2",
     "get-port": "^5.1.1",

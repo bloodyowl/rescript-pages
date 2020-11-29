@@ -13,7 +13,7 @@ type dirent
 @bs.module("path") external join3: (string, string, string) => string = "join"
 @bs.module("path") external basename: (string, string) => string = "basename"
 @bs.module("path") external extname: string => string = "extname"
-@bs.module external frontMatter: string => {"attributes": 'a, "body": string} = "front-matter"
+@bs.module("front-matter") external frontMatter: string => {"attributes": 'a, "body": string} = "default"
 type config = {
   "html": bool,
   "xhtmlOut": bool,
@@ -41,8 +41,8 @@ external highlightAuto: string => {"value": string} = "highlightAuto"
 type hjs
 type language
 
-@bs.module external hjs: hjs = "highlight.js"
-@bs.module external reason: language = "reason-highlightjs"
+@bs.module("highlight.js") external hjs: hjs = "default"
+@bs.module("reason-highlightjs") external reason: language = "default"
 
 @bs.send
 external registerLanguage: (hjs, string, language) => unit = "registerLanguage"
@@ -610,12 +610,12 @@ let getFiles = (config, readFileSync, mode) => {
 }
 
 type plugin
-@bs.new @bs.module external htmlPlugin: {..} => plugin = "html-webpack-plugin"
-@bs.new @bs.module external scriptPlugin: {..} => plugin = "script-ext-html-webpack-plugin"
-@bs.new @bs.module
+@bs.new @bs.module("html-webpack-plugin") external htmlPlugin: {..} => plugin = "default"
+@bs.new @bs.module("script-ext-html-webpack-plugin") external scriptPlugin: {..} => plugin = "default"
+@bs.new @bs.module("inline-translations-webpack-plugin")
 external inlineTranslationPlugin: Js.Null.t<Js.Json.t> => plugin =
-  "inline-translations-webpack-plugin"
-@bs.new @bs.module external copyPlugin: {..} => plugin = "copy-webpack-plugin"
+  "default"
+@bs.new @bs.module("copy-webpack-plugin") external copyPlugin: {..} => plugin = "default"
 @bs.new @bs.module("webpack") external definePlugin: {..} => plugin = "DefinePlugin"
 
 type mode = [#development | #production]
