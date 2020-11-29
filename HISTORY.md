@@ -1,3 +1,9 @@
+## 0.5.1
+
+Features:
+
+- Add title prop to Link (e937123)
+
 ## 0.5.0
 
 Features:
