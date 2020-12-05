@@ -1,3 +1,9 @@
+## 0.5.2
+
+Changes:
+
+- Upgrade highlight.js (f6d84cb)
+
 ## 0.5.1
 
 Features:
