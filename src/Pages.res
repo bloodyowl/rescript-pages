@@ -168,8 +168,12 @@ module Link = {
       | (None, None) => None
       }}
       onClick={event => {
-        event->ReactEvent.Mouse.preventDefault
-        ReasonReactRouter.push(href)
+        switch (ReactEvent.Mouse.metaKey(event), ReactEvent.Mouse.ctrlKey(event)) {
+        | (false, false) =>
+          event->ReactEvent.Mouse.preventDefault
+          ReasonReactRouter.push(href)
+        | _ => ()
+        }
       }}>
       children
     </a>
