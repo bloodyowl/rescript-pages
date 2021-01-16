@@ -1,3 +1,9 @@
+## 0.5.3
+
+Fixes:
+
+- Don't overwrite link behaviour with pressed meta key (6589621)
+
 ## 0.5.2
 
 Changes:
