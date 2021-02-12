@@ -1,3 +1,9 @@
+## 1.0.1
+
+Fixes:
+
+- Adapt to @rescript/react (2facd2e)
+
 ## 1.0.0
 
 Changes:
