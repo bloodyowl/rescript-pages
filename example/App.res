@@ -291,9 +291,7 @@ module Footer = {
 
   @react.component
   let make = () => {
-    <div className=Styles.container>
-      {"Copyright 2020 - Matthias Le Brun"->ReasonReact.string}
-    </div>
+    <div className=Styles.container> {"Copyright 2020 - Matthias Le Brun"->React.string} </div>
   }
 }
 
@@ -303,7 +301,7 @@ module App = {
     let container = style(.[display(flexBox), flexDirection(column), flexGrow(1.0)])
   }
   @react.component
-  let make = (~url as {ReasonReact.Router.path: path}, ~config as _) => {
+  let make = (~url as {RescriptReactRouter.path: path}, ~config as _) => {
     <div className=Styles.container>
       <Pages.Head>
         <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport" />

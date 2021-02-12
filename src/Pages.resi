@@ -127,29 +127,29 @@ module App: {
   @react.component
   let make: (
     ~config: config,
-    ~app: React.component<{"config": config, "url": ReasonReactRouter.url}>,
+    ~app: React.component<{"config": config, "url": RescriptReactRouter.url}>,
   ) => React.element
 }
 
 type emotion
 
 type app = {
-  app: React.component<{"config": config, "url": ReasonReactRouter.url}>,
+  app: React.component<{"config": config, "url": RescriptReactRouter.url}>,
   container: React.component<{
     "config": config,
     "app": React.component<{
       "config": config,
-      "url": ReasonReactRouter.url,
+      "url": RescriptReactRouter.url,
     }>,
   }>,
   config: config,
   provider: React.component<{
     "value": option<Context.t>,
-    "serverUrl": option<ReasonReactRouter.url>,
+    "serverUrl": option<RescriptReactRouter.url>,
     "config": config,
     "children": React.element,
   }>,
   emotion: emotion,
 }
 
-let make: (React.component<{"config": config, "url": ReasonReactRouter.url}>, config) => app
+let make: (React.component<{"config": config, "url": RescriptReactRouter.url}>, config) => app

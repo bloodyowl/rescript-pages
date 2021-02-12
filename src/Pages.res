@@ -74,16 +74,16 @@ module ServerUrlContext = {
   module Provider = {
     @bs.obj
     external makeProps: (
-      ~value: option<ReasonReactRouter.url>,
+      ~value: option<RescriptReactRouter.url>,
       ~children: React.element,
       ~key: string=?,
       unit,
-    ) => {"value": option<ReasonReactRouter.url>, "children": React.element} = ""
+    ) => {"value": option<RescriptReactRouter.url>, "children": React.element} = ""
     let make = context->React.Context.provider
   }
 }
 
-// copied from ReasonReactRouter
+// copied from RescriptReactRouter
 let pathParse = str =>
   switch str {
   | "" | "/" => list{}
@@ -119,7 +119,7 @@ let rec stripInitialPath = (path, sourcePath) => {
 
 let useUrl = () => {
   let serverUrl = React.useContext(ServerUrlContext.context)
-  let {path} as url = ReasonReactRouter.useUrl(~serverUrl?, ())
+  let {path} as url = RescriptReactRouter.useUrl(~serverUrl?, ())
   {...url, path: stripInitialPath(path, pathParse(variantBasePath))}
 }
 
@@ -171,7 +171,7 @@ module Link = {
         switch (ReactEvent.Mouse.metaKey(event), ReactEvent.Mouse.ctrlKey(event)) {
         | (false, false) =>
           event->ReactEvent.Mouse.preventDefault
-          ReasonReactRouter.push(href)
+          RescriptReactRouter.push(href)
         | _ => ()
         }
       }}>
@@ -444,18 +444,18 @@ type emotion
 @bs.module external emotion: emotion = "emotion"
 
 type app = {
-  app: React.component<{"config": config, "url": ReasonReactRouter.url}>,
+  app: React.component<{"config": config, "url": RescriptReactRouter.url}>,
   container: React.component<{
     "config": config,
     "app": React.component<{
       "config": config,
-      "url": ReasonReactRouter.url,
+      "url": RescriptReactRouter.url,
     }>,
   }>,
   config: config,
   provider: React.component<{
     "config": config,
-    "serverUrl": option<ReasonReactRouter.url>,
+    "serverUrl": option<RescriptReactRouter.url>,
     "value": option<Context.t>,
     "children": React.element,
   }>,

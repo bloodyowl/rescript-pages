@@ -399,7 +399,7 @@ let getFiles = (config, readFileSync, mode) => {
           }
           serverUrl->Js.String2.split("/")->List.fromArray
         }
-        let url: ReasonReactRouter.url = {
+        let url: RescriptReactRouter.url = {
           path: path,
           hash: "",
           search: "",

@@ -26,7 +26,7 @@
   },
   "suffix": ".bs.js",
   "bs-dependencies": [
-    "reason-react",
+    "@rescript/react",
     "rescript-asyncdata",
     "rescript-future",
     "rescript-request",
