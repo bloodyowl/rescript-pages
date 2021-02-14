@@ -1,3 +1,9 @@
+## 1.0.2
+
+Changes:
+
+- Cleaner module purge (fbb34b3)
+
 ## 1.0.1
 
 Fixes:
