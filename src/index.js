@@ -27,7 +27,20 @@ function createWebsocketServer(port) {
 }
 
 function requireFresh(path) {
-  delete require.cache[path];
+  const id = require.resolve(path);
+  const module = require.cache[id];
+
+  if (module) {
+    Object.values(require.cache)
+      .filter(({ children }) => children.includes(module))
+      .forEach((parent) => {
+        while (parent.children.includes(module)) {
+          parent.children.splice(parent.children.indexOf(module), 1);
+        }
+      });
+
+    delete require.cache[id];
+  }
   return require(path);
 }
 
