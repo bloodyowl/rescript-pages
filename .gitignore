@@ -27,3 +27,7 @@ lib/bs
 *.bs.js
 node_modules/
 dist/
+src/**/*.mjs
+example/**/*.mjs
+!src/emotion.mjs
+test/**/*.mjs

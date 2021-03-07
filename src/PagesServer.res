@@ -4,20 +4,29 @@ open Pages
 type dirent
 @bs.send external isDirectory: dirent => bool = "isDirectory"
 @bs.send external isFile: dirent => bool = "isFile"
-@bs.get external name: dirent => string = "name"
-@bs.module("fs") external readdirSync: (string, {..}) => array<dirent> = "readdirSync"
-@bs.module("fs") external readFileSync: (string, @bs.as("utf8") _) => string = "readFileSync"
-@bs.val external cwd: unit => string = "process.cwd"
-@bs.module("path") external join: (string, string) => string = "join"
-@bs.module("path") external resolve: (string, string) => string = "resolve"
-@bs.module("path") external join3: (string, string, string) => string = "join"
-@bs.module("path") external basename: (string, string) => string = "basename"
-@bs.module("path") external extname: string => string = "extname"
-@bs.module("front-matter") external frontMatter: string => {"attributes": 'a, "body": string} = "default"
+@get external name: dirent => string = "name"
+@module("fs") external readdirSync: (string, {..}) => array<dirent> = "readdirSync"
+@module("fs") external readFileSync: (string, @as("utf8") _) => string = "readFileSync"
+@val external cwd: unit => string = "process.cwd"
+@module("path") external join: (string, string) => string = "join"
+@module("path") external resolve: (string, string) => string = "resolve"
+@module("path") external join3: (string, string, string) => string = "join"
+@module("path") external basename: (string, string) => string = "basename"
+@module("path") external extname: string => string = "extname"
+@module("front-matter")
+external frontMatter: string => {"attributes": 'a, "body": string} = "default"
 type config = {
   "html": bool,
   "xhtmlOut": bool,
   "highlight": (string, Js.Undefined.t<string>) => string,
+}
+
+module ReactDOMServer = {
+  @module("react-dom/server.js")
+  external renderToString: React.element => string = "renderToString"
+
+  @module("react-dom/server.js")
+  external renderToStaticMarkup: React.element => string = "renderToStaticMarkup"
 }
 
 external directionAsString: direction => string = "%identity"
@@ -25,24 +34,24 @@ external directionAsString: direction => string = "%identity"
 type remarkable
 type remarkablePlugin
 
-@bs.new @bs.module("remarkable")
+@new @module("remarkable")
 external remarkable: (string, config) => remarkable = "Remarkable"
 @bs.send external render: (remarkable, string) => string = "render"
 @bs.send external use: (remarkable, remarkablePlugin) => unit = "use"
 
-@bs.module("remarkable/linkify")
+@module("remarkable/dist/cjs/linkify.js")
 external linkify: remarkablePlugin = "linkify"
 
-@bs.module("highlight.js")
+@module("highlight.js") @scope("default")
 external highlight: (~lang: Js.Undefined.t<string>, string) => {"value": string} = "highlight"
-@bs.module("highlight.js")
+@module("highlight.js") @scope("default")
 external highlightAuto: string => {"value": string} = "highlightAuto"
 
 type hjs
 type language
 
-@bs.module("highlight.js") external hjs: hjs = "default"
-@bs.module("reason-highlightjs") external reason: language = "default"
+@module("highlight.js") external hjs: hjs = "default"
+@module("reason-highlightjs") external reason: language = "default"
 
 @bs.send
 external registerLanguage: (hjs, string, language) => unit = "registerLanguage"
@@ -51,9 +60,9 @@ hjs->registerLanguage("reason", reason)
 
 type emotionServer
 type emotionCache
-@bs.module("create-emotion-server")
+@module("create-emotion-server") @scope("default")
 external createEmotionServer: emotionCache => emotionServer = "default"
-@bs.get external getEmotionCache: Pages.emotion => emotionCache = "cache"
+@get external getEmotionCache: Pages.emotion => emotionCache = "cache"
 
 @bs.send
 external renderStylesToString: (emotionServer, string) => string = "renderStylesToString"
@@ -205,7 +214,7 @@ module Store = {
   }
 }
 
-@bs.module("react-helmet") @bs.scope("Helmet")
+@module("react-helmet") @scope("Helmet")
 external renderStatic: unit => {
   "base": string,
   "bodyAttributes": string,
@@ -219,7 +228,7 @@ external renderStatic: unit => {
 } = "renderStatic"
 
 let joinUrl = (s1, s2) =>
-  (`${s1}/${s2}`)
+  `${s1}/${s2}`
   ->Js.String2.replaceByRe(%re("/:\/\//g"), "__PROTOCOL__")
   ->Js.String2.replaceByRe(%re("/\/+/g"), "/")
   ->Js.String2.replaceByRe(%re("/__PROTOCOL__/g"), "://")
@@ -246,10 +255,7 @@ let wrapRssFeed = (config, feedUrl, items) => {
     <description><![CDATA[${config.siteDescription}]]></description>
     <link>${config.baseUrl}</link>
     <lastBuildDate>${Js.Date.make()->Js.Date.toUTCString}</lastBuildDate>
-    <atom:link href="${joinUrl(
-    config.baseUrl,
-    feedUrl,
-  )}" rel="self" type="application/rss+xml"/>
+    <atom:link href="${joinUrl(config.baseUrl, feedUrl)}" rel="self" type="application/rss+xml"/>
     ${items}
   </channel>
 </rss>`
@@ -263,364 +269,386 @@ let sitemap = urls => {
 </urlset>`
 }
 
-@bs.val external requireCache: Js.Dict.t<'a> = "require.cache"
-@bs.val external require: string => {"default": option<app>} = "require"
-
-let requireFresh = path => {
-  Js.Dict.unsafeDeleteKey(. requireCache, path)
-  require(path)
-}
-
 type url = {pathname: string}
-@bs.new external nodeUrl: string => url = "URL"
+@new external nodeUrl: string => url = "URL"
 
 type processEnv
-@bs.val external processEnv: processEnv = "process.env"
-@bs.set external setPagesPath: (processEnv, string) => unit = "PAGES_PATH"
-@bs.set external setPagesRoot: (processEnv, string) => unit = "PAGES_ROOT"
+@val external processEnv: processEnv = "process.env"
+@set external setPagesPath: (processEnv, string) => unit = "PAGES_PATH"
+@set external setPagesRoot: (processEnv, string) => unit = "PAGES_ROOT"
+
+@val external importJs: string => Js.Promise.t<'a> = "import"
 
 let getFiles = (config, readFileSync, mode) => {
-  let (files, pages) = config.variants->Array.reduce((Map.String.empty, Set.String.empty), ((
-    map,
-    set,
-  ), variant) => {
-    let directory = join(
-      cwd(),
-      switch variant.subdirectory {
-      | Some(subdirectory) => join(config.distDirectory, subdirectory)
-      | None => config.distDirectory
-      },
-    )
-    let webpackHtml = switch config.mode {
-    | SPA => readFileSync(. join(directory, "_source.html"), "utf8")
-    | Static => ""
-    }
-    setPagesPath(
-      processEnv,
-      switch variant.subdirectory {
-      | Some(subdir) => join(nodeUrl(config.baseUrl).pathname, subdir)
-      | None => nodeUrl(config.baseUrl).pathname
-      },
-    )
-    setPagesRoot(processEnv, nodeUrl(config.baseUrl).pathname)
-    switch requireFresh(join(directory, "_entry.js"))["default"] {
-    | Some({app, provider, container, emotion}) =>
-      let server = createEmotionServer(emotion->getEmotionCache)
-      let collections = getCollections(variant)
-      let now = Js.Date.now()
-      let collections = switch mode {
-      | #development => collections
-      | #production => collections->Map.String.map(values => {
-          values->Map.String.toArray->Array.keep(((_key, (item, _))) =>
-            switch item {
-            | {draft: true} => false
-            | {date: Some(date)} => Js.Date.fromString(date)->Js.Date.getTime < now
-            | _ => true
-            }
-          )->Map.String.fromArray
-        })
+  config.variants
+  ->Array.reduce(Js.Promise.resolve((Map.String.empty, Set.String.empty)), (promise, variant) => {
+    promise->Js.Promise.then_(((map, set)) => {
+      let directory = join(
+        cwd(),
+        switch variant.subdirectory {
+        | Some(subdirectory) => join(config.distDirectory, subdirectory)
+        | None => config.distDirectory
+        },
+      )
+      let webpackHtml = switch config.mode {
+      | SPA => readFileSync(. join(directory, "_source.html"), "utf8")
+      | Static => ""
       }
-      let store =
-        collections
-        ->Map.String.toArray
-        ->Array.reduce({lists: Map.String.empty, items: Map.String.empty}, (acc, (
-          collection,
-          collectionItems,
-        )) => {
-          let items =
-            collectionItems
-            ->Map.String.map(((item, _listItem)) => item)
-            ->Map.String.valuesToArray
-            ->Array.map(item => (item.slug, item))
-            ->Map.String.fromArray
-          let listItems =
-            collectionItems->Map.String.valuesToArray->Array.map(((_item, listItem)) => listItem)
-          let descendendingListItems = listItems->Array.reverse
-          let ascending = paginate(listItems, config.paginateBy)->Map.Int.set(0, all(listItems))
-          let decending =
-            paginate(descendendingListItems, config.paginateBy)->Map.Int.set(
-              0,
-              all(descendendingListItems),
-            )
-
-          {
-            lists: acc.lists->Map.String.set(
-              collection,
-              Map.String.fromArray([
-                (#asc->directionAsString, ascending),
-                (#desc->directionAsString, decending),
-              ]),
-            ),
-            items: acc.items->Map.String.set(collection, items),
-          }
-        })
-
-      let itemUsageMap = MutableMap.String.make()
-      let prerenderedPages = variant.getUrlsToPrerender({
-        getAll: Store.getAll(store),
-        getAllItems: Store.getAllItems(store),
-        getPages: Store.getPages(store),
-      })
-      ->Array.map(url => (
+      setPagesPath(
+        processEnv,
         switch variant.subdirectory {
-        | Some(subdir) => join3(nodeUrl(config.baseUrl).pathname, subdir, url)
-        | None => join(nodeUrl(config.baseUrl).pathname, url)
+        | Some(subdir) => join(nodeUrl(config.baseUrl).pathname, subdir)
+        | None => nodeUrl(config.baseUrl).pathname
         },
-        switch variant.subdirectory {
-        | Some(subdir) => join(subdir, url)
-        | None => url
-        },
-      ))
-      ->Array.map(((serverUrl, filePath)) => {
-        let context: Context.t = {
-          lists: store.lists->Map.String.map(collection =>
-            collection->Map.String.map(sortedCollection =>
-              sortedCollection->Map.Int.map(items => AsyncData.Done(Ok(items)))
-            )
-          ),
-          items: store.items->Map.String.map(collection =>
-            collection->Map.String.map(items => AsyncData.Done(Ok(items)))
-          ),
-          listsRequests: MutableMap.String.make(),
-          itemsRequests: MutableMap.String.make(),
-        }
-        let path = switch serverUrl {
-        | "" | "/" => list{}
-        /* remove the preceeding /, which every pathname seems to have */
-        | _ =>
-          let serverUrl =
-            serverUrl->Js.String2.startsWith("/")
-              ? serverUrl->Js.String2.sliceToEnd(~from=1)
-              : serverUrl
-          /* remove the trailing /, which some pathnames might have. Ugh */
-          let serverUrl = switch Js.String2.get(serverUrl, Js.String2.length(serverUrl) - 1) {
-          | "/" => Js.String.slice(~from=0, ~to_=-1, serverUrl)
-          | _ => serverUrl
-          }
-          serverUrl->Js.String2.split("/")->List.fromArray
-        }
-        let url: RescriptReactRouter.url = {
-          path: path,
-          hash: "",
-          search: "",
-        }
-        let html = renderStylesToString(
-          server,
-          ReactDOMServer.renderToString({
-            React.createElement(
-              provider,
-              {
-                "value": Some(context),
-                "serverUrl": Some(url),
-                "config": config,
-                "children": React.createElement(container, {"app": app, "config": config}),
-              },
-            )
-          }),
-        )
-
-        let initialData: Context.t = {
-          lists: context.listsRequests
-          ->MutableMap.String.toArray
-          ->Array.reduce(Map.String.empty, (acc, (collectionKey, collectionDirections)) =>
-            acc->Map.String.update(collectionKey, _ => Some(
-              collectionDirections
+      )
+      setPagesRoot(processEnv, nodeUrl(config.baseUrl).pathname)
+      importJs(
+        join(directory, "_entry.js?") ++ Js.Date.now()->Js.Float.toString,
+      )->Js.Promise.then_(value => {
+        switch value["default"]["exports"]["default"] {
+        | Some({app, provider, container, emotion}) =>
+          let server = createEmotionServer(emotion->getEmotionCache)
+          let collections = getCollections(variant)
+          let now = Js.Date.now()
+          let collections = switch mode {
+          | #development => collections
+          | #production =>
+            collections->Map.String.map(values => {
+              values
               ->Map.String.toArray
-              ->Array.reduce(Map.String.empty, (acc, (direction, pagesToRender)) =>
-                acc->Map.String.update(direction, _ =>
-                  context.lists
-                  ->Map.String.get(collectionKey)
-                  ->Option.flatMap(value => value->Map.String.get(direction))
-                  ->Option.flatMap(pages => Some(
-                    pagesToRender->Set.Int.reduce(Map.Int.empty, (acc, key) =>
-                      acc->Map.Int.update(key, _ => pages->Map.Int.get(key))
+              ->Array.keep(((_key, (item, _))) =>
+                switch item {
+                | {draft: true} => false
+                | {date: Some(date)} => Js.Date.fromString(date)->Js.Date.getTime < now
+                | _ => true
+                }
+              )
+              ->Map.String.fromArray
+            })
+          }
+          let store =
+            collections
+            ->Map.String.toArray
+            ->Array.reduce({lists: Map.String.empty, items: Map.String.empty}, (
+              acc,
+              (collection, collectionItems),
+            ) => {
+              let items =
+                collectionItems
+                ->Map.String.map(((item, _listItem)) => item)
+                ->Map.String.valuesToArray
+                ->Array.map(item => (item.slug, item))
+                ->Map.String.fromArray
+              let listItems =
+                collectionItems
+                ->Map.String.valuesToArray
+                ->Array.map(((_item, listItem)) => listItem)
+              let descendendingListItems = listItems->Array.reverse
+              let ascending = paginate(listItems, config.paginateBy)->Map.Int.set(0, all(listItems))
+              let decending =
+                paginate(descendendingListItems, config.paginateBy)->Map.Int.set(
+                  0,
+                  all(descendendingListItems),
+                )
+
+              {
+                lists: acc.lists->Map.String.set(
+                  collection,
+                  Map.String.fromArray([
+                    (#asc->directionAsString, ascending),
+                    (#desc->directionAsString, decending),
+                  ]),
+                ),
+                items: acc.items->Map.String.set(collection, items),
+              }
+            })
+
+          let itemUsageMap = MutableMap.String.make()
+          let prerenderedPages =
+            variant.getUrlsToPrerender({
+              getAll: Store.getAll(store),
+              getAllItems: Store.getAllItems(store),
+              getPages: Store.getPages(store),
+            })
+            ->Array.map(url => (
+              switch variant.subdirectory {
+              | Some(subdir) => join3(nodeUrl(config.baseUrl).pathname, subdir, url)
+              | None => join(nodeUrl(config.baseUrl).pathname, url)
+              },
+              switch variant.subdirectory {
+              | Some(subdir) => join(subdir, url)
+              | None => url
+              },
+            ))
+            ->Array.map(((serverUrl, filePath)) => {
+              let context: Context.t = {
+                lists: store.lists->Map.String.map(collection =>
+                  collection->Map.String.map(sortedCollection =>
+                    sortedCollection->Map.Int.map(items => AsyncData.Done(Ok(items)))
+                  )
+                ),
+                items: store.items->Map.String.map(collection =>
+                  collection->Map.String.map(items => AsyncData.Done(Ok(items)))
+                ),
+                listsRequests: MutableMap.String.make(),
+                itemsRequests: MutableMap.String.make(),
+              }
+              let path = switch serverUrl {
+              | "" | "/" => list{}
+
+              | _ =>
+                let serverUrl =
+                  serverUrl->Js.String2.startsWith("/")
+                    ? serverUrl->Js.String2.sliceToEnd(~from=1)
+                    : serverUrl
+
+                let serverUrl = switch Js.String2.get(serverUrl, Js.String2.length(serverUrl) - 1) {
+                | "/" => Js.String.slice(~from=0, ~to_=-1, serverUrl)
+                | _ => serverUrl
+                }
+                serverUrl->Js.String2.split("/")->List.fromArray
+              }
+              let url: RescriptReactRouter.url = {
+                path: path,
+                hash: "",
+                search: "",
+              }
+              let html = renderStylesToString(
+                server,
+                ReactDOMServer.renderToString({
+                  React.createElement(
+                    provider,
+                    {
+                      "value": Some(context),
+                      "serverUrl": Some(url),
+                      "config": config,
+                      "children": React.createElement(container, {"app": app, "config": config}),
+                    },
+                  )
+                }),
+              )
+
+              let initialData: Context.t = {
+                lists: context.listsRequests
+                ->MutableMap.String.toArray
+                ->Array.reduce(Map.String.empty, (acc, (collectionKey, collectionDirections)) =>
+                  acc->Map.String.update(collectionKey, _ => Some(
+                    collectionDirections
+                    ->Map.String.toArray
+                    ->Array.reduce(Map.String.empty, (acc, (direction, pagesToRender)) =>
+                      acc->Map.String.update(direction, _ =>
+                        context.lists
+                        ->Map.String.get(collectionKey)
+                        ->Option.flatMap(value => value->Map.String.get(direction))
+                        ->Option.flatMap(pages => Some(
+                          pagesToRender->Set.Int.reduce(Map.Int.empty, (acc, key) =>
+                            acc->Map.Int.update(key, _ => pages->Map.Int.get(key))
+                          ),
+                        ))
+                      )
                     ),
                   ))
-                )
-              ),
-            ))
-          ),
-          items: context.itemsRequests
-          ->MutableMap.String.toArray
-          ->Array.reduce(Map.String.empty, (acc, (collectionKey, idsToRender)) =>
-            acc->Map.String.update(collectionKey, _ =>
-              context.items
-              ->Map.String.get(collectionKey)
-              ->Option.flatMap(pages => Some(
-                idsToRender->Set.String.reduce(Map.String.empty, (acc, key) => {
-                  itemUsageMap->MutableMap.String.set(serverUrl, (collectionKey, key))
-                  acc->Map.String.update(key, _ => pages->Map.String.get(key))
-                }),
-              ))
-            )
-          ),
-          listsRequests: MutableMap.String.make(),
-          itemsRequests: MutableMap.String.make(),
-        }
-        let initialData =
-          initialData->Js.Json.serializeExn->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)
-        let helmet = renderStatic()
-        let errorPageMarker =
-          filePath === "404.html" || filePath->Js.String2.endsWith("/404.html")
-            ? `<script>window.PAGES_BOOT_MODE="render";</script>`
-            : `<script>window.PAGES_BOOT_MODE="hydrate";</script>`
-        (
-          filePath,
-          `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}${errorPageMarker}</head><div id="root">${html}</div><script id="initialData" type="text/data">${initialData}</script>${webpackHtml}</html>`,
-        )
-      })
-      ->Map.String.fromArray
-
-      let redirects = switch variant.getRedirectMap {
-      | Some(getRedirectMap) =>
-        getRedirectMap({
-          getAll: Store.getAll(store),
-          getAllItems: Store.getAllItems(store),
-          getPages: Store.getPages(store),
-        })
-      | None => Js.Dict.empty()
-      }
-      ->Js.Dict.entries
-      ->Array.map(((fromUrl, toUrl)) => (
-        switch variant.subdirectory {
-        | Some(subdir) => join(subdir, fromUrl)
-        | None => fromUrl
-        },
-        switch variant.subdirectory {
-        | Some(subdir) => join(subdir, toUrl)
-        | None => toUrl
-        },
-      ))
-      ->Array.map(((fromUrl, toUrl)) => {
-        let html = ReactDOMServer.renderToStaticMarkup(<Redirect url=toUrl />)
-        let helmet = renderStatic()
-        (
-          fromUrl,
-          `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}</head><div id="root">${html}</div></html>`,
-        )
-      })
-      ->Map.String.fromArray
-
-      let lists =
-        store.lists
-        ->Map.String.toArray
-        ->Array.reduce(Map.String.empty, (acc, (collectionName, collection)) =>
-          collection
-          ->Map.String.toArray
-          ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
-            sortedCollection->Map.Int.toArray->Array.reduce(acc, (acc, (page, items)) =>
-              acc->Map.String.set(
-                switch variant.subdirectory {
-                | Some(subdirectory) =>
-                  `/${subdirectory}/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`
-                | None => `/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`
-                },
-                items->Js.Json.serializeExn,
-              )
-            )
-          )
-        )
-      let feeds =
-        store.lists
-        ->Map.String.toArray
-        ->Array.reduce(Map.String.empty, (acc, (collectionName, collection)) =>
-          collection
-          ->Map.String.toArray
-          ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
-            sortedCollection->Map.Int.get(0)->Option.map(page => {
-              let url = switch variant.subdirectory {
-              | Some(subdirectory) =>
-                `/${subdirectory}/api/${collectionName}/feeds/${direction}/feed.xml`
-              | None => `/api/${collectionName}/feeds/${direction}/feed.xml`
+                ),
+                items: context.itemsRequests
+                ->MutableMap.String.toArray
+                ->Array.reduce(Map.String.empty, (acc, (collectionKey, idsToRender)) =>
+                  acc->Map.String.update(collectionKey, _ =>
+                    context.items
+                    ->Map.String.get(collectionKey)
+                    ->Option.flatMap(pages => Some(
+                      idsToRender->Set.String.reduce(Map.String.empty, (acc, key) => {
+                        itemUsageMap->MutableMap.String.set(serverUrl, (collectionKey, key))
+                        acc->Map.String.update(key, _ => pages->Map.String.get(key))
+                      }),
+                    ))
+                  )
+                ),
+                listsRequests: MutableMap.String.make(),
+                itemsRequests: MutableMap.String.make(),
               }
-              acc->Map.String.set(
-                url,
-                {
-                  let items = page.items->Array.keepMap(item => {
-                    itemUsageMap->MutableMap.String.toArray->Array.getBy(((
-                      _,
-                      (collection, key),
-                    )) => {
-                      collection == collectionName && key == item.slug
-                    })->Option.map(((url, _)) => renderRssItem(config, variant, item, url))
-                  })->Js.Array2.joinWith("\n    ")
-                  wrapRssFeed(config, url, items)
-                },
+              let initialData =
+                initialData->Js.Json.serializeExn->Js.String.replaceByRe(%re("/</g"), `\\u003c`, _)
+              let helmet = renderStatic()
+              let errorPageMarker =
+                filePath === "404.html" || filePath->Js.String2.endsWith("/404.html")
+                  ? `<script>window.PAGES_BOOT_MODE="render";</script>`
+                  : `<script>window.PAGES_BOOT_MODE="hydrate";</script>`
+              (
+                filePath,
+                `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}${errorPageMarker}</head><div id="root">${html}</div><script id="initialData" type="text/data">${initialData}</script>${webpackHtml}</html>`,
               )
-            })->Option.getWithDefault(acc)
-          )
-        )
-      let items =
-        store.items
-        ->Map.String.toArray
-        ->Array.reduce(Map.String.empty, (acc, (collectionName, collection)) =>
-          collection->Map.String.toArray->Array.reduce(acc, (acc, (id, item)) =>
-            acc->Map.String.set(
+            })
+            ->Map.String.fromArray
+
+          let redirects =
+            switch variant.getRedirectMap {
+            | Some(getRedirectMap) =>
+              getRedirectMap({
+                getAll: Store.getAll(store),
+                getAllItems: Store.getAllItems(store),
+                getPages: Store.getPages(store),
+              })
+            | None => Js.Dict.empty()
+            }
+            ->Js.Dict.entries
+            ->Array.map(((fromUrl, toUrl)) => (
               switch variant.subdirectory {
-              | Some(subdirectory) => `/${subdirectory}/api/${collectionName}/items/${id}.json`
-              | None => `/api/${collectionName}/items/${id}.json`
+              | Some(subdir) => join(subdir, fromUrl)
+              | None => fromUrl
               },
-              item->Js.Json.serializeExn,
+              switch variant.subdirectory {
+              | Some(subdir) => join(subdir, toUrl)
+              | None => toUrl
+              },
+            ))
+            ->Array.map(((fromUrl, toUrl)) => {
+              let html = ReactDOMServer.renderToStaticMarkup(<Redirect url=toUrl />)
+              let helmet = renderStatic()
+              (
+                fromUrl,
+                `<!DOCTYPE html><html ${helmet["htmlAttributes"]}><head>${helmet["title"]}${helmet["base"]}${helmet["meta"]}${helmet["link"]}${helmet["style"]}${helmet["script"]}</head><div id="root">${html}</div></html>`,
+              )
+            })
+            ->Map.String.fromArray
+
+          let lists =
+            store.lists
+            ->Map.String.toArray
+            ->Array.reduce(Map.String.empty, (acc, (collectionName, collection)) =>
+              collection
+              ->Map.String.toArray
+              ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
+                sortedCollection
+                ->Map.Int.toArray
+                ->Array.reduce(acc, (acc, (page, items)) =>
+                  acc->Map.String.set(
+                    switch variant.subdirectory {
+                    | Some(subdirectory) =>
+                      `/${subdirectory}/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`
+                    | None => `/api/${collectionName}/pages/${direction}/${page->Int.toString}.json`
+                    },
+                    items->Js.Json.serializeExn,
+                  )
+                )
+              )
             )
-          )
-        )
+          let feeds =
+            store.lists
+            ->Map.String.toArray
+            ->Array.reduce(Map.String.empty, (acc, (collectionName, collection)) =>
+              collection
+              ->Map.String.toArray
+              ->Array.reduce(acc, (acc, (direction, sortedCollection)) =>
+                sortedCollection
+                ->Map.Int.get(0)
+                ->Option.map(page => {
+                  let url = switch variant.subdirectory {
+                  | Some(subdirectory) =>
+                    `/${subdirectory}/api/${collectionName}/feeds/${direction}/feed.xml`
+                  | None => `/api/${collectionName}/feeds/${direction}/feed.xml`
+                  }
+                  acc->Map.String.set(
+                    url,
+                    {
+                      let items =
+                        page.items
+                        ->Array.keepMap(item => {
+                          itemUsageMap
+                          ->MutableMap.String.toArray
+                          ->Array.getBy(((_, (collection, key))) => {
+                            collection == collectionName && key == item.slug
+                          })
+                          ->Option.map(((url, _)) => renderRssItem(config, variant, item, url))
+                        })
+                        ->Js.Array2.joinWith("\n    ")
+                      wrapRssFeed(config, url, items)
+                    },
+                  )
+                })
+                ->Option.getWithDefault(acc)
+              )
+            )
+          let items =
+            store.items
+            ->Map.String.toArray
+            ->Array.reduce(Map.String.empty, (acc, (collectionName, collection)) =>
+              collection
+              ->Map.String.toArray
+              ->Array.reduce(acc, (acc, (id, item)) =>
+                acc->Map.String.set(
+                  switch variant.subdirectory {
+                  | Some(subdirectory) => `/${subdirectory}/api/${collectionName}/items/${id}.json`
+                  | None => `/api/${collectionName}/items/${id}.json`
+                  },
+                  item->Js.Json.serializeExn,
+                )
+              )
+            )
 
-      (
-        map->Map.String.merge(
-          prerenderedPages->Map.String.mergeMany(
-            Array.concatMany([
-              lists->Map.String.toArray,
-              items->Map.String.toArray,
-              feeds->Map.String.toArray,
-              redirects->Map.String.toArray,
-            ]),
-          ),
-          (_, a, b) =>
-            switch (a, b) {
-            | (_, Some(b)) => Some(b)
-            | (Some(a), _) => Some(a)
-            | (None, None) => None
-            },
-        ),
-        set->Set.String.union(
-          prerenderedPages
-          ->Map.String.keysToArray
-          ->Array.map(url => joinUrl(config.baseUrl, url))
-          ->Set.String.fromArray,
-        ),
-      )
-
-    | None => (map, set)
-    }
+          Js.Promise.resolve((
+            map->Map.String.merge(
+              prerenderedPages->Map.String.mergeMany(
+                Array.concatMany([
+                  lists->Map.String.toArray,
+                  items->Map.String.toArray,
+                  feeds->Map.String.toArray,
+                  redirects->Map.String.toArray,
+                ]),
+              ),
+              (_, a, b) =>
+                switch (a, b) {
+                | (_, Some(b)) => Some(b)
+                | (Some(a), _) => Some(a)
+                | (None, None) => None
+                },
+            ),
+            set->Set.String.union(
+              prerenderedPages
+              ->Map.String.keysToArray
+              ->Array.map(url => joinUrl(config.baseUrl, url))
+              ->Set.String.fromArray,
+            ),
+          ))
+        | None => Js.Promise.resolve((map, set))
+        }
+      }, _)
+    }, _)
   })
-
-  files
-  ->Map.String.set(`/sitemap.xml`, sitemap(pages->Set.String.toArray))
-  ->Map.String.toArray
-  ->Array.map(((filePath, value)) => {
-    let filePath = join(config.distDirectory, filePath)
-    let filePath =
-      filePath->Js.String2.startsWith("/") ? filePath->Js.String2.sliceToEnd(~from=1) : filePath
-    let filePath =
-      extname(filePath) != ""
-        ? filePath
-        : filePath ++ (filePath->Js.String2.endsWith("/") ? "" : "/") ++ "index.html"
-    (filePath, value)
-  })
+  ->Js.Promise.then_(((files, pages)) => {
+    Js.Promise.resolve(
+      files
+      ->Map.String.set(`/sitemap.xml`, sitemap(pages->Set.String.toArray))
+      ->Map.String.toArray
+      ->Array.map(((filePath, value)) => {
+        let filePath = join(config.distDirectory, filePath)
+        let filePath =
+          filePath->Js.String2.startsWith("/") ? filePath->Js.String2.sliceToEnd(~from=1) : filePath
+        let filePath =
+          extname(filePath) != ""
+            ? filePath
+            : filePath ++ (filePath->Js.String2.endsWith("/") ? "" : "/") ++ "index.html"
+        (filePath, value)
+      }),
+    )
+  }, _)
 }
 
 type plugin
-@bs.new @bs.module("html-webpack-plugin") external htmlPlugin: {..} => plugin = "default"
-@bs.new @bs.module("script-ext-html-webpack-plugin") external scriptPlugin: {..} => plugin = "default"
-@bs.new @bs.module("inline-translations-webpack-plugin")
-external inlineTranslationPlugin: Js.Null.t<Js.Json.t> => plugin =
-  "default"
-@bs.new @bs.module("copy-webpack-plugin") external copyPlugin: {..} => plugin = "default"
-@bs.new @bs.module("webpack") external definePlugin: {..} => plugin = "DefinePlugin"
+@new @module("html-webpack-plugin") external htmlPlugin: {..} => plugin = "default"
+@new @module("script-ext-html-webpack-plugin") external scriptPlugin: {..} => plugin = "default"
+@new @module("inline-translations-webpack-plugin")
+external inlineTranslationPlugin: Js.Null.t<Js.Json.t> => plugin = "default"
+@new @module("copy-webpack-plugin") external copyPlugin: {..} => plugin = "default"
+@new @module("webpack") @scope("default") external definePlugin: {..} => plugin = "DefinePlugin"
+@new @module("webpack") @scope("default") external bannerPlugin: {..} => plugin = "BannerPlugin"
 
 type mode = [#development | #production]
 
-@bs.val external dirname: string = "__dirname"
+@module("path") external dirname: string => string = "dirname"
+@module("url") external fileURLToPath: url => string = "fileURLToPath"
+@val external importMetaUrl: url = "import.meta.url"
+
+let dirname = dirname(fileURLToPath(importMetaUrl))
 
 let getWebpackConfig = (config, mode: mode, entry) => {
   config.variants->Array.reduce([], (acc, variant) => {
@@ -634,8 +662,11 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
           "alias": Js.Dict.fromArray([("emotion", join(dirname, "emotion.js"))]),
         },
+        "experiments": {
+          "outputModule": false,
+        },
         "output": {
-          "libraryTarget": Js.Undefined.return("commonjs2"),
+          "libraryTarget": Js.Undefined.return("commonjs"),
           "path": switch variant.subdirectory {
           | Some(subdir) => join3(cwd(), config.distDirectory, subdir)
           | None => join(cwd(), config.distDirectory)
@@ -646,7 +677,6 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           },
           "filename": `_entry.js`,
           "chunkFilename": `public/chunks/[contenthash].js`,
-          "jsonpFunction": "staticWebsite__d",
         },
         "plugins": [
           definePlugin({
@@ -662,13 +692,21 @@ let getWebpackConfig = (config, mode: mode, entry) => {
             ->Option.map(Js.Json.parseExn)
             ->Js.Null.fromOption,
           ),
+          bannerPlugin({
+            "banner": `import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+let module = {exports: {}};
+let exports = module.exports;
+export default module;`,
+            "raw": true,
+          }),
         ],
         "externals": Js.Dict.fromArray([
-          ("react", "commonjs2 react"),
-          ("react-dom", "commonjs2 react-dom"),
-          ("react-dom-server", "commonjs2 react-dom-server"),
-          ("react-helmet", `commonjs2 react-helmet`),
-          ("bs-platform", "commonjs2 bs-platform"),
+          ("react", "commonjs react"),
+          ("react-dom", "commonjs react-dom"),
+          ("react-dom-server", "commonjs react-dom-server"),
+          ("react-helmet", `commonjs react-helmet`),
+          ("bs-platform", "commonjs bs-platform"),
         ]),
       },
       {
@@ -680,6 +718,9 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
           "alias": Js.Dict.fromArray([("emotion", join(dirname, "emotion.js"))]),
         },
+        "experiments": {
+          "outputModule": false,
+        },
         "output": {
           "libraryTarget": Js.Undefined.empty,
           "path": switch variant.subdirectory {
@@ -690,9 +731,8 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           | Some(subdir) => join(nodeUrl(config.baseUrl).pathname, subdir)
           | None => nodeUrl(config.baseUrl).pathname
           },
-          "filename": `public/[name].[hash].js`,
+          "filename": `public/[name].[fullhash].js`,
           "chunkFilename": `public/chunks/[contenthash].js`,
-          "jsonpFunction": "staticWebsite__d",
         },
         "externals": Js.Dict.empty(),
         "plugins": [

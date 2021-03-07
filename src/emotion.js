@@ -1,4 +1,27 @@
-let createEmotion =
-  require("create-emotion").default || require("create-emotion");
+import createEmotion from "create-emotion";
 
-module.exports = createEmotion({ key: "rpcss" });
+let {
+  cache,
+  css,
+  cx,
+  flush,
+  getRegisteredStyles,
+  hydrate,
+  injectGlobal,
+  keyframes,
+  merge,
+  sheet,
+} = createEmotion({ key: "rpcss" });
+
+export {
+  cache,
+  css,
+  cx,
+  flush,
+  getRegisteredStyles,
+  hydrate,
+  injectGlobal,
+  keyframes,
+  merge,
+  sheet,
+};

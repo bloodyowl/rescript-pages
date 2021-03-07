@@ -5,11 +5,12 @@
     "clean": "bsb -clean-world",
     "build": "bsb -make-world",
     "watch": "bsb -make-world -w",
-    "test": "bin/pages build example/App.bs.js && retest test/*.bs.js",
-    "test-ci": "retest test/*.bs.js"
+    "test": "node bin/pages.mjs build example/App.mjs && retest test/*.mjs",
+    "test-ci": "retest test/*.mjs"
   },
+  "type": "module",
   "bin": {
-    "pages": "bin/pages"
+    "pages": "node bin/pages.mjs"
   },
   "keywords": [
     "BuckleScript"
@@ -18,8 +19,8 @@
   "license": "MIT",
   "devDependencies": {
     "@rescript/react": "^0.10.1",
-    "bs-platform": "^8.0.0",
-    "rescript-test": "^0.6.3"
+    "bs-platform": "^9.0.1",
+    "rescript-test": "^2.0.2"
   },
   "dependencies": {
     "bs-css-emotion": "^2.1.0",
@@ -29,13 +30,12 @@
     "copy-webpack-plugin": "^6.3.0",
     "create-emotion": "^10.0.27",
     "create-emotion-server": "^10.0.27",
-    "esm": "^3.2.25",
     "express": "^4.17.1",
     "front-matter": "^4.0.2",
     "get-port": "^5.1.1",
     "gh-pages": "^3.1.0",
     "highlight.js": "^10.4.1",
-    "html-webpack-plugin": "^4.5.0",
+    "html-webpack-plugin": "^5.2.0",
     "inline-translations-webpack-plugin": "^1.0.1",
     "memfs": "^3.2.0",
     "mime": "^2.4.6",
@@ -48,8 +48,8 @@
     "rescript-future": "^1.0.4",
     "rescript-request": "^1.0.2",
     "script-ext-html-webpack-plugin": "^2.1.5",
-    "webpack": "^4.0.0",
-    "webpack-cli": "^4.1.0",
+    "webpack": "^5.0.0",
+    "webpack-cli": "^4.5.0",
     "ws": "^7.4.0"
   },
   "peerDependencies": {
