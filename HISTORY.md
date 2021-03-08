@@ -1,3 +1,9 @@
+## 2.0.0
+
+Changes:
+
+- **Breaking**: move away from ESM, require node >14 (a10544c)
+
 ## 1.0.2
 
 Changes:
