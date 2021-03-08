@@ -8,6 +8,9 @@
     "test": "node bin/pages.mjs build example/App.mjs && retest test/*.mjs",
     "test-ci": "retest test/*.mjs"
   },
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "type": "module",
   "bin": {
     "pages": "bin/pages.mjs"
