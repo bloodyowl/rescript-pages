@@ -23,7 +23,7 @@ jobs:
         run: yarn build
 
       - name: Build website
-        run: bin/pages.mjs build example/App.bs.js
+        run: bin/pages.mjs build example/App.mjs
 
       - name: Test website output
         run: yarn test-ci
