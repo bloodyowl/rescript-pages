@@ -10,7 +10,7 @@
   },
   "type": "module",
   "bin": {
-    "pages": "node bin/pages.mjs"
+    "pages": "bin/pages.mjs"
   },
   "keywords": [
     "BuckleScript"
