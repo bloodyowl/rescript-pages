@@ -303,7 +303,7 @@ let getFiles = (config, readFileSync, mode) => {
       )
       setPagesRoot(processEnv, nodeUrl(config.baseUrl).pathname)
       importJs(
-        join(directory, "_entry.js?") ++ Js.Date.now()->Js.Float.toString,
+        join(directory, "_entry.mjs?") ++ Js.Date.now()->Js.Float.toString,
       )->Js.Promise.then_(value => {
         switch value["default"]["exports"]["default"] {
         | Some({app, provider, container, emotion}) =>
@@ -675,7 +675,7 @@ let getWebpackConfig = (config, mode: mode, entry) => {
           | Some(subdir) => join(nodeUrl(config.baseUrl).pathname, subdir)
           | None => nodeUrl(config.baseUrl).pathname
           },
-          "filename": `_entry.js`,
+          "filename": `_entry.mjs`,
           "chunkFilename": `public/chunks/[contenthash].js`,
         },
         "plugins": [
