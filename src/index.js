@@ -1,4 +1,3 @@
-import fs from "fs";
 import path from "path";
 import webpack from "webpack";
 import chalk from "chalk";
@@ -7,8 +6,10 @@ import * as PagesServer from "./PagesServer.mjs";
 
 global.__ = (localeKey) => localeKey;
 
+let fs = await import("fs");
+
 async function createWebsocketServer(port) {
-  let WebSocket = await import("ws");
+  let {default: WebSocket} = await import("ws");
   let server = new WebSocket.Server({
     port: port,
   });
@@ -40,14 +41,15 @@ async function start(entry, devServerPort) {
   let {
     default: { config },
   } = await import(entry);
-  let express = await import("express");
-  let getPort = await import("get-port");
+  let {default: express} = await import("express");
+  let {default: getPort} = await import("get-port");
   let app = express();
   let { createFsFromVolume, Volume } = await import("memfs");
   let volume = new Volume();
   let outputFileSystem = createFsFromVolume(volume);
   // rewrite `fs` from now on
   fs = outputFileSystem;
+  outputFileSystem.isVirtual = true;
   outputFileSystem.join = path.join.bind(path);
   let chokidar = await import("chokidar");
   let watchedDirectories = new Set();
@@ -172,7 +174,7 @@ async function start(entry, devServerPort) {
     );
     let pathsToTry = [normalizedFilePath, normalizedFilePath + "/index.html"];
     let returned = false;
-    for (pathToTry of pathsToTry) {
+    for (let pathToTry of pathsToTry) {
       if (!returned) {
         try {
           let stat = fs.statSync(pathToTry);
