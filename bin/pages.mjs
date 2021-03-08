@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-"use strict";
+
 import path from "path";
 import chalk from "chalk";
 import ghpages from "gh-pages";
