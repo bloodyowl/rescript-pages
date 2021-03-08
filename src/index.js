@@ -1,14 +1,15 @@
-let fs = require("fs");
-let path = require("path");
-let webpack = require("webpack");
-let chalk = require("chalk");
-let mime = require("mime");
-let PagesServer = require("./PagesServer.bs");
+import path from "path";
+import webpack from "webpack";
+import chalk from "chalk";
+import mime from "mime";
+import * as PagesServer from "./PagesServer.mjs";
 
 global.__ = (localeKey) => localeKey;
 
-function createWebsocketServer(port) {
-  let WebSocket = require("ws");
+let fs = await import("fs");
+
+async function createWebsocketServer(port) {
+  let {default: WebSocket} = await import("ws");
   let server = new WebSocket.Server({
     port: port,
   });
@@ -26,54 +27,36 @@ function createWebsocketServer(port) {
   };
 }
 
-function requireFresh(path) {
-  const id = require.resolve(path);
-  const module = require.cache[id];
-
-  if (module) {
-    Object.values(require.cache)
-      .filter(({ children }) => children.includes(module))
-      .forEach((parent) => {
-        while (parent.children.includes(module)) {
-          parent.children.splice(parent.children.indexOf(module), 1);
-        }
-      });
-
-    delete require.cache[id];
-  }
-  return require(path);
-}
-
-function prerenderForConfig(config, mode) {
-  PagesServer.getFiles(config, fs.readFileSync, mode).forEach(
-    ([filePath, value]) => {
-      fs.mkdirSync(path.dirname(path.join(process.cwd(), filePath)), {
-        recursive: true,
-      });
-      fs.writeFileSync(path.join(process.cwd(), filePath), value, "utf8");
-    }
-  );
+async function prerenderForConfig(config, mode) {
+  let files = await PagesServer.getFiles(config, fs.readFileSync, mode);
+  files.forEach(([filePath, value]) => {
+    fs.mkdirSync(path.dirname(path.join(process.cwd(), filePath)), {
+      recursive: true,
+    });
+    fs.writeFileSync(path.join(process.cwd(), filePath), value, "utf8");
+  });
 }
 
 async function start(entry, devServerPort) {
   let {
     default: { config },
-  } = require(entry);
-  let express = require("express");
-  let getPort = require("get-port");
+  } = await import(entry);
+  let {default: express} = await import("express");
+  let {default: getPort} = await import("get-port");
   let app = express();
-  let { createFsFromVolume, Volume } = require("memfs");
+  let { createFsFromVolume, Volume } = await import("memfs");
   let volume = new Volume();
   let outputFileSystem = createFsFromVolume(volume);
   // rewrite `fs` from now on
   fs = outputFileSystem;
+  outputFileSystem.isVirtual = true;
   outputFileSystem.join = path.join.bind(path);
-  let chokidar = require("chokidar");
+  let chokidar = await import("chokidar");
   let watchedDirectories = new Set();
 
-  function onContentChange(_) {
+  async function onContentChange(_) {
     console.log("Content changed");
-    prerenderForConfig(config, "development");
+    await prerenderForConfig(config, "development");
     ws.send("change");
   }
 
@@ -107,7 +90,7 @@ async function start(entry, devServerPort) {
   });
 
   let port = await getPort();
-  let ws = createWebsocketServer(port);
+  let ws = await createWebsocketServer(port);
 
   let suffix = `<script>new WebSocket("ws://localhost:${port}").onmessage = function() {location.reload(true)}</script>`;
 
@@ -123,8 +106,8 @@ async function start(entry, devServerPort) {
     };
   }
 
-  let onWebpackChange = debounce(() => {
-    prerenderForConfig(config, "development");
+  let onWebpackChange = debounce(async () => {
+    await prerenderForConfig(config, "development");
     watchDirectories();
     if (!isFirstRun) {
       ws.send("change");
@@ -139,7 +122,7 @@ async function start(entry, devServerPort) {
         aggregateTimeout: 300,
         poll: undefined,
       },
-      (error, stats) => {
+      async (error, stats) => {
         try {
           if (error) {
             reject(error);
@@ -150,7 +133,7 @@ async function start(entry, devServerPort) {
             } else {
               resolve();
               // reload config
-              let entryExports = requireFresh(entry);
+              let entryExports = await import(`${entry}?${Date.now()}`);
               if (entryExports.default == undefined) {
                 // multiple build occuring, wait for the next one
                 return;
@@ -191,7 +174,7 @@ async function start(entry, devServerPort) {
     );
     let pathsToTry = [normalizedFilePath, normalizedFilePath + "/index.html"];
     let returned = false;
-    for (pathToTry of pathsToTry) {
+    for (let pathToTry of pathsToTry) {
       if (!returned) {
         try {
           let stat = fs.statSync(pathToTry);
@@ -261,30 +244,34 @@ async function start(entry, devServerPort) {
 async function build(entry) {
   let {
     default: { config },
-  } = require(entry);
+  } = await import(entry);
   console.log("1/2 Bundling assets");
-  await new Promise((resolve, reject) => {
-    let compiler = webpack(
-      PagesServer.getWebpackConfig(config, "production", entry)
-    );
-    compiler.run((error, stats) => {
-      if (error) {
-        reject(error);
-      } else {
-        if (stats.hasErrors()) {
-          let errors = stats.toJson().errors.join("\n");
-          reject(errors);
+  try {
+    await new Promise((resolve, reject) => {
+      let compiler = webpack(
+        PagesServer.getWebpackConfig(config, "production", entry)
+      );
+      compiler.run((error, stats) => {
+        if (error) {
+          reject(error);
         } else {
-          resolve();
+          if (stats.hasErrors()) {
+            let errors = stats.toJson().errors;
+            reject(errors);
+          } else {
+            resolve();
+          }
         }
-      }
+      });
     });
-  });
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
   console.log("2/2 Prerendering pages");
-  prerenderForConfig(config, "production");
+  await prerenderForConfig(config, "production");
   console.log("Done!");
   return config;
 }
 
-exports.start = start;
-exports.build = build;
+export { start, build };

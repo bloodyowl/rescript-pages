@@ -11,10 +11,10 @@ let getWebpackConfig: (
   "externals": Js.Dict.t<string>,
   "mode": mode,
   "resolve": {"modules": array<string>, "alias": Js.Dict.t<string>},
+  "experiments": {"outputModule": bool},
   "output": {
     "chunkFilename": string,
     "filename": string,
-    "jsonpFunction": string,
     "libraryTarget": Js.Undefined.t<string>,
     "path": string,
     "publicPath": string,
@@ -23,4 +23,8 @@ let getWebpackConfig: (
   "target": string,
 }>
 
-let getFiles: (Pages.config, (. string, string) => string, mode) => array<(string, string)>
+let getFiles: (
+  Pages.config,
+  (. string, string) => string,
+  mode,
+) => Js.Promise.t<array<(string, string)>>

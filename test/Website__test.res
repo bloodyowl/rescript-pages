@@ -1,7 +1,7 @@
 open Test
 
 let fileExists = (~message=?, filePath) => assertion(~message?, ~operator="fileExists", (a, b) => a == b, Node.Fs.existsSync(filePath), true)
-let fileContains = (~message=?, filePath, contents) => assertion(~message?, ~operator="fileExists", (a, b) => a->Js.String2.includes(b), Node.Fs.readFileSync(filePath, #utf8), contents)
+let fileContains = (~message=?, filePath, contents) => assertion(~message?, ~operator="fileContains", (a, b) => a->Js.String2.includes(b), Node.Fs.readFileSync(filePath, #utf8), contents)
 
 test("Generates sitemap", () => {
   fileExists(Node.Path.join([Node.Process.cwd(), "dist/sitemap.xml"]))
