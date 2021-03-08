@@ -1,3 +1,9 @@
+## 2.0.1
+
+Changes:
+
+- Ensure module type in generated webpack file (8deaf94)
+
 ## 2.0.0
 
 Changes:
