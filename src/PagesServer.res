@@ -60,7 +60,7 @@ hjs->registerLanguage("reason", reason)
 
 type emotionServer
 type emotionCache
-@module("create-emotion-server") @scope("default")
+@module("@emotion/server/create-instance/dist/emotion-server-create-instance.cjs.js") @scope("default")
 external createEmotionServer: emotionCache => emotionServer = "default"
 @get external getEmotionCache: Pages.emotion => emotionCache = "cache"
 
@@ -660,7 +660,7 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "target": "node",
         "resolve": {
           "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
-          "alias": Js.Dict.fromArray([("emotion", join(dirname, "emotion.js"))]),
+          "alias": Js.Dict.fromArray([("@emotion/css/dist/emotion-css.esm.js", join(dirname, "emotion.mjs"))]),
         },
         "experiments": {
           "outputModule": false,
@@ -716,7 +716,7 @@ export default module;`,
         "target": "web",
         "resolve": {
           "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
-          "alias": Js.Dict.fromArray([("emotion", join(dirname, "emotion.js"))]),
+          "alias": Js.Dict.fromArray([("@emotion/css/dist/emotion-css.esm.js", join(dirname, "emotion.mjs"))]),
         },
         "experiments": {
           "outputModule": false,

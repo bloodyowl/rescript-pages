@@ -72,7 +72,7 @@ module ServerUrlContext = {
   let context = React.createContext(None)
 
   module Provider = {
-    @bs.obj
+    @obj
     external makeProps: (
       ~value: option<RescriptReactRouter.url>,
       ~children: React.element,
@@ -107,12 +107,12 @@ let pathParse = str =>
     |> List.fromArray
   }
 
-@bs.val external variantBasePath: string = "process.env.PAGES_PATH"
-@bs.val external basePath: string = "process.env.PAGES_ROOT"
+@val external variantBasePath: string = "process.env.PAGES_PATH"
+@val external basePath: string = "process.env.PAGES_ROOT"
 
 let rec stripInitialPath = (path, sourcePath) => {
   switch (path, sourcePath) {
-  | (list{a1, ...a2}, list{b1, ...b2}) when a1 === b1 => stripInitialPath(a2, b2)
+  | (list{a1, ...a2}, list{b1, ...b2}) if a1 === b1 => stripInitialPath(a2, b2)
   | (path, _) => path
   }
 }
@@ -124,16 +124,21 @@ let useUrl = () => {
 }
 
 let join = (s1, s2) =>
-  (`${s1}/${s2}`)
+  `${s1}/${s2}`
   ->Js.String2.replaceByRe(%re("/:\/\//g"), "__PROTOCOL__")
   ->Js.String2.replaceByRe(%re("/\/+/g"), "/")
   ->Js.String2.replaceByRe(%re("/__PROTOCOL__/g"), "://")
 
-@bs.val external t: string => string = "__"
-@bs.val external tr: string => React.element = "__"
+@val external t: string => string = "__"
+@val external tr: string => React.element = "__"
 
 let makeVariantUrl = join(variantBasePath)
 let makeBaseUrl = join(basePath)
+
+module Emotion = {
+  @module("@emotion/css") external css: {..} => string = "css"
+  @module("@emotion/css") external cx: array<string> => string = "cx"
+}
 
 module Link = {
   @react.component
@@ -158,9 +163,7 @@ module Link = {
     <a
       href
       ?title
-      className={CssJs.merge(.
-        [className, isActive ? activeClassName : None]->Array.keepMap(x => x),
-      )}
+      className={Emotion.cx([className, isActive ? activeClassName : None]->Array.keepMap(x => x))}
       style=?{switch (style, isActive ? activeStyle : None) {
       | (Some(a), Some(b)) => Some(ReactDOM.Style.combine(a, b))
       | (Some(a), None) => Some(a)
@@ -181,14 +184,14 @@ module Link = {
 }
 
 module Head = {
-  @react.component @bs.module("react-helmet")
+  @react.component @module("react-helmet")
   external make: (~children: React.element) => React.element = "Helmet"
 }
 
 module ActivityIndicator = {
   module Styles = {
-    open CssJs
-    let container = style(.[display(flexBox), margin(auto)])
+    open Emotion
+    let container = css({"display": "flex", "margin": "auto"})
   }
 
   @react.component
@@ -227,14 +230,14 @@ module ActivityIndicator = {
 
 module ErrorIndicator = {
   module Styles = {
-    open CssJs
-    let container = style(.[
-      display(flexBox),
-      alignItems(center),
-      justifyContent(center),
-      margin(auto),
-    ])
-    let text = style(.[fontSize(22->px), fontWeight(bold), textAlign(center)])
+    open Emotion
+    let container = css({
+      "display": "flex",
+      "alignItems": "center",
+      "justifyContent": "center",
+      "margin": "auto",
+    })
+    let text = css({"fontSize": 22, "fontWeight": "bold", "textAlign": "center"})
   }
 
   @react.component
@@ -270,7 +273,7 @@ module Context = {
   let context = React.createContext((default, defaultSetState))
 
   module Provider = {
-    @bs.obj
+    @obj
     external makeProps: (
       ~value: context,
       ~children: React.element,
@@ -411,7 +414,7 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
   ->Option.getWithDefault(NotAsked)
 }
 
-@bs.get external textContent: Dom.element => string = "textContent"
+@get external textContent: Dom.element => string = "textContent"
 
 module App = {
   @react.component
@@ -422,7 +425,7 @@ module App = {
 }
 
 type bootMode = [#hydrate | #render]
-@bs.val external pagesBootMode: bootMode = "window.PAGES_BOOT_MODE"
+@val external pagesBootMode: bootMode = "window.PAGES_BOOT_MODE"
 
 let start = (app, config) => {
   let root = ReactDOM.querySelector("#root")
@@ -439,9 +442,9 @@ let start = (app, config) => {
   }
 }
 
-@bs.val external window: {..} = "window"
+@val external window: {..} = "window"
 type emotion
-@bs.module external emotion: emotion = "emotion"
+@module external emotion: emotion = "@emotion/css"
 
 type app = {
   app: React.component<{"config": config, "url": RescriptReactRouter.url}>,

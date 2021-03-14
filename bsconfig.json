@@ -29,9 +29,7 @@
     "@rescript/react",
     "rescript-asyncdata",
     "rescript-future",
-    "rescript-request",
-    "bs-css-emotion",
-    "bs-css"
+    "rescript-request"
   ],
   "bs-dev-dependencies": ["rescript-test"],
   "warnings": {

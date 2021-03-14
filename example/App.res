@@ -1,43 +1,37 @@
 open Belt
 
-let smallViewport = CssJs.media("(max-width: 600px)")
+module Emotion = {
+  @module("@emotion/css") external css: {..} => string = "css"
+  @module("@emotion/css") external keyframes: {..} => string = "css"
+  @module("@emotion/css") external cx: array<string> => string = "cx"
 
-module Styles = {
-  open CssJs
-  global(.
-    "body",
-    [
-      margin(zero),
-      padding(zero),
-      fontFamilies([
-        #custom("-apple-system"),
-        #custom("BlinkMacSystemFont"),
-        #custom("SF Pro Display"),
-        #custom("Segoe UI"),
-        #custom("Roboto"),
-        #custom("Oxygen"),
-        #custom("Ubuntu"),
-        #custom("Cantarell"),
-        #custom("Fira Sans"),
-        #custom("Droid Sans"),
-        #custom("Helvetica Neue"),
-        #sansSerif,
-      ]),
-    ],
-  )
-  global(. "#root", [minHeight(100.0->vh), display(flexBox), flexDirection(column)])
+  @module("@emotion/css") external injectGlobal: string => unit = "injectGlobal"
 }
+
+Emotion.injectGlobal(`body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI,
+    Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
+    sans-serif;
+}
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+`)
 
 module WidthContainer = {
   module Styles = {
-    open CssJs
-    let container = style(.[
-      width(100.0->pct),
-      maxWidth(1000->px),
-      marginLeft(auto),
-      marginRight(auto),
-      flexGrow(1.0),
-    ])
+    open Emotion
+    let container = css({
+      "width": "100%",
+      "maxWidth": 1000,
+      "marginLeft": "auto",
+      "marginRight": "auto",
+      "flexGrow": 1,
+    })
   }
   @react.component
   let make = (~children) => {
@@ -47,56 +41,37 @@ module WidthContainer = {
 
 module MarkdownBody = {
   module Styles = {
-    open CssJs
-    let text = style(.[
-      selector(
-        "pre",
-        [
-          padding2(~v=10->px, ~h=20->px),
-          backgroundColor("F4F7F8"->hex),
-          overflowX(auto),
-          unsafe("WebkitOverflowScrolling", "touch"),
-          fontSize(16->px),
-          borderLeftWidth(2->px),
-          borderLeftColor("46515B"->hex),
-          borderLeftStyle(solid),
-        ],
-      ),
-      selector(
-        "code",
-        [
-          fontFamilies([
-            #custom("SFMono-Regular"),
-            #custom("Consolas"),
-            #custom("Liberation Mono"),
-            #custom("Menlo"),
-            #custom("Courier"),
-            #custom("monospace"),
-          ]),
-          fontSize(0.85->em),
-          lineHeight(#abs(1.)),
-        ],
-      ),
-      selector(".hljs-keyword", [color("DA6BB5"->hex)]),
-      selector(".hljs-constructor", [color("DD792B"->hex)]),
-      selector(".hljs-identifier", [color("1E9EA7"->hex)]),
-      selector(".hljs-module-identifier", [color("C84682"->hex)]),
-      selector(".hljs-string", [color("3BA1C8"->hex)]),
-      selector(".hljs-comment", [color("aaa"->hex)]),
-      selector(".hljs-operator", [color("DA6BB5"->hex)]),
-      selector(".hljs-attribute", [color("4CB877"->hex)]),
-      selector("table", [width(100.->pct), textAlign(center)]),
-      selector("table thead th", [backgroundColor("E4EBEE"->hex), padding2(~v=10->px, ~h=zero)]),
-      selector(
-        "blockquote",
-        [
-          opacity(0.6),
-          borderLeft(4->px, solid, "46515B"->hex),
-          margin(zero),
-          padding2(~h=20->px, ~v=zero),
-        ],
-      ),
-    ])
+    open Emotion
+    let text = css({
+      "pre": {
+        "padding": "10px 20px",
+        "backgroundColor": "#F4F7F8",
+        "overflowX": "auto",
+        "WebkitOverflowScrolling": "touch",
+        "fontSize": 16,
+        "borderLeft": `2px solid #333`,
+        "borderLeftWidth": 2,
+      },
+      "code": {
+        "fontFamily": `SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace`,
+        "fontSize": "0.85em",
+        "lineHeight": 1.0,
+      },
+      ".hljs-keyword": {"color": "#DA6BB5"},
+      ".hljs-constructor": {"color": "#DD792B"},
+      ".hljs-identifier": {"color": "#1E9EA7"},
+      ".hljs-module-identifier": {"color": "#C84682"},
+      ".hljs-string": {"color": "#3BA1C8"},
+      ".hljs-comment": {"color": "#aaa"},
+      ".hljs-operator": {"color": "#DA6BB5"},
+      ".hljs-attribute": {"color": "#4CB877"},
+      "blockquote": {
+        "opacity": 0.6,
+        "borderLeft": `4px solid #333`,
+        "margin": 0,
+        "padding": "20px 0",
+      },
+    })
   }
   @react.component
   let make = (~body) => <div className=Styles.text dangerouslySetInnerHTML={{"__html": body}} />
@@ -104,10 +79,10 @@ module MarkdownBody = {
 
 module FeatureBlock = {
   module Styles = {
-    open CssJs
-    let container = style(.[padding(20->px)])
-    let title = style(.[fontSize(18->px), fontWeight(normal)])
-    let text = style(.[fontSize(14->px), fontWeight(normal)])
+    open Emotion
+    let container = css({"padding": 20})
+    let title = css({"fontSize": 18, "fontWeight": "normal"})
+    let text = css({"fontSize": 14, "fontWeight": "normal"})
   }
   @react.component
   let make = (~title, ~text) => {
@@ -120,15 +95,18 @@ module FeatureBlock = {
 
 module Home = {
   module Styles = {
-    open CssJs
-    let blocks = style(.[
-      display(flexBox),
-      flexDirection(row),
-      flexWrap(wrap),
-      smallViewport([flexDirection(column)]),
-    ])
-    let block = style(.[width(33.333->pct), smallViewport([width(100.0->pct)])])
-    let container = style(.[flexGrow(1.0)])
+    open Emotion
+    let blocks = css({
+      "display": "flex",
+      "flexDirection": "row",
+      "flexWrap": "wrap",
+      "@media (max-width: 600px)": {"flexDirection": "column"},
+    })
+    let block = css({
+      "width": "33.3333%",
+      "@media (max-width: 600px)": {"width": "100%"},
+    })
+    let container = css({"flexGrow": 1})
   }
   @react.component
   let make = () => {
@@ -156,33 +134,38 @@ module Home = {
 
 module Docs = {
   module Styles = {
-    open CssJs
-    let container = style(.[
-      display(flexBox),
-      flexDirection(row),
-      alignItems(stretch),
-      flexGrow(1.0),
-      smallViewport([flexDirection(columnReverse)]),
-    ])
-    let body = style(.[
-      flexGrow(1.0),
-      flexShrink(1.0),
-      display(flexBox),
-      flexDirection(column),
-      padding(10->px),
-    ])
+    open Emotion
+    let container = css({
+      "display": "flex",
+      "flexDirection": "row",
+      "alignItems": "stretch",
+      "flexGrow": 1,
+      "@media (max-width: 600px)": {"flexDirection": "column-reverse"},
+    })
+    let body = css({
+      "flexGrow": 1,
+      "flexShrink": 1,
+      "display": "flex",
+      "flexDirection": "column",
+      "padding": 10,
+    })
 
-    let column = style(.[
-      width(250->px),
-      boxSizing(borderBox),
-      padding2(~v=20->px, ~h=10->px),
-      flexGrow(0.0),
-      flexShrink(0.0),
-      display(flexBox),
-      flexDirection(column),
-    ])
-    let link = style(.[color(currentColor), textDecoration(none), display(block), padding(10->px)])
-    let activeLink = style(.[fontWeight(bold)])
+    let column = css({
+      "width": 250,
+      "boxSizing": "border-box",
+      "padding": "20px 10px",
+      "flexGrow": 0,
+      "flexShrink": 0,
+      "display": "flex",
+      "flexDirection": "column",
+    })
+    let link = css({
+      "color": "currentColor",
+      "textDecoration": "none",
+      "display": "block",
+      "padding": 10,
+    })
+    let activeLink = css({"fontWeight": "bold"})
   }
   @react.component
   let make = (~slug) => {
@@ -231,23 +214,23 @@ module Spacer = {
 
 module Header = {
   module Styles = {
-    open CssJs
-    let resetLink = style(.[color(currentColor), textDecoration(none)])
-    let activeLink = style(.[fontWeight(bold)])
-    let header = style(.[
-      padding(40->px),
-      paddingTop(20->px),
-      paddingBottom(20->px),
-      margin(zero),
-      display(flexBox),
-      flexDirection(row),
-      alignItems(center),
-      justifyContent(spaceBetween),
-      color("fff"->hex),
-      backgroundColor("0A296A"->hex),
-    ])
-    let title = style(.[fontSize(50->px), smallViewport([fontSize(18->px)])])
-    let navigation = style(.[display(flexBox), flexDirection(row), alignItems(center)])
+    open Emotion
+    let resetLink = css({"color": "currentColor", "textDecoration": "none"})
+    let activeLink = css({"fontWeight": "bold"})
+    let header = css({
+      "padding": 40,
+      "paddingTop": 20,
+      "paddingBottom": 20,
+      "margin": 0,
+      "display": "flex",
+      "flexDirection": "row",
+      "alignItems": "center",
+      "justifyContent": "space-between",
+      "color": "#fff",
+      "backgroundColor": "#0A296A",
+    })
+    let title = css({"fontSize": 50, "@media (max-width: 600px)": {"fontSize": 18}})
+    let navigation = css({"display": "flex", "flexDirection": "row", "alignItems": "center"})
   }
   @react.component
   let make = () => {
@@ -279,14 +262,14 @@ module Header = {
 
 module Footer = {
   module Styles = {
-    open CssJs
-    let container = style(.[
-      backgroundColor("222"->hex),
-      color("fff"->hex),
-      textAlign(center),
-      padding(20->px),
-      fontSize(14->px),
-    ])
+    open Emotion
+    let container = css({
+      "backgroundColor": "#222",
+      "color": "#fff",
+      "textAlign": "center",
+      "padding": 20,
+      "fontSize": 14,
+    })
   }
 
   @react.component
@@ -297,8 +280,8 @@ module Footer = {
 
 module App = {
   module Styles = {
-    open CssJs
-    let container = style(.[display(flexBox), flexDirection(column), flexGrow(1.0)])
+    open Emotion
+    let container = css({"display": "flex", "flexDirection": "column", "flexGrow": 1})
   }
   @react.component
   let make = (~url as {RescriptReactRouter.path: path}, ~config as _) => {
