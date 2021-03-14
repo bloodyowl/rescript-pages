@@ -59,6 +59,7 @@
     "bs-platform": "^8.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "rescript-asyncdata": "^2.0.0"
+    "rescript-asyncdata": "^2.0.0",
+    "@emotion/css": "^11.1.3"
   }
 }
