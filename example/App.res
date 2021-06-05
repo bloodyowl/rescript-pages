@@ -274,6 +274,9 @@ module Header = {
       "flexWrap": "wrap",
       "paddingLeft": 10,
       "paddingRight": 10,
+      "@media(max-width: 400px)": {
+        "flexDirection": "column",
+      },
     })
     let title = css({"fontSize": 18, "textAlign": "center"})
     let navigation = css({"display": "flex", "flexDirection": "row", "alignItems": "center"})
