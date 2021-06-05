@@ -17,6 +17,7 @@ type dirent
 external frontMatter: string => {"attributes": 'a, "body": string} = "default"
 type config = {
   "html": bool,
+  "langPrefix": string,
   "xhtmlOut": bool,
   "highlight": (string, Js.Undefined.t<string>) => string,
 }
@@ -52,11 +53,13 @@ type language
 
 @module("highlight.js") external hjs: hjs = "default"
 @module("reason-highlightjs") external reason: language = "default"
+@module("./rescript-highlightjs.cjs") external rescript: language = "default"
 
 @bs.send
 external registerLanguage: (hjs, string, language) => unit = "registerLanguage"
 
 hjs->registerLanguage("reason", reason)
+hjs->registerLanguage("rescript", rescript)
 
 type emotionServer
 type emotionCache
@@ -73,6 +76,7 @@ let remarkable = remarkable(
   {
     "html": true,
     "xhtmlOut": true,
+    "langPrefix": "hljs language-",
     "highlight": (code, lang) => {
       if lang == Js.undefined {
         code

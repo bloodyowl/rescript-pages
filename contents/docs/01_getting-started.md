@@ -6,7 +6,7 @@ slug: getting-started
 ## Installation
 
 ```console
-$ yarn add rescript-pages bs-css-emotion reason-react rescript-asyncdata
+$ yarn add rescript-pages @emotion/css @rescript/react rescript-asyncdata
 ```
 
 Add them to your `bsconfig.json` dependencies:
@@ -14,11 +14,12 @@ Add them to your `bsconfig.json` dependencies:
 ```diff
  "bs-dependencies": [
 +  "rescript-pages",
-+  "bs-css-emotion",
-+  "reason-react",
++  "@rescript/react",
 +  "rescript-asyncdata"
  ]
 ```
+
+For the livereload to work, start ReScript with the `-ws 9999` build option (that'll make it possible for ReScript Pages to listen for compilation end).
 
 ## Contents
 
@@ -38,7 +39,7 @@ The posts will be sorted by filename, but you can specify custom slugs.
 
 You'll need to create a React component with the following signature:
 
-```reason
+```rescript
 @react.component
 let make = (~url: ReasonReact.Router.url, ~config: Pages.config) => React.element
 ```

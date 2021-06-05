@@ -7,13 +7,13 @@ You have two hooks available to fetch content:
 
 ## Items
 
-```reason
+```rescript
 Pages.useItem("collection", ~id="itemId")
 ```
 
 Items have the following type:
 
-```reason
+```rescript
 type item = {
   slug: string,
   filename: string,
@@ -27,25 +27,25 @@ type item = {
 
 ## Collections
 
-```reason
+```rescript
 Pages.useCollection("collection")
 ```
 
 By default, `useCollection` returns **all** items, but it paginates once you provide a `page` param.
 
-```reason
+```rescript
 Pages.useCollection("collection", ~page=1)
 ```
 
 By default, all collections are sorted alphabetically on the filename by descending order (which is the most common for blogs, where you want the latest content first), but you can change that with the `direction` param:
 
-```reason
+```rescript
 Pages.useCollection("collection", ~page=1, ~direction=#asc)
 ```
 
 Collections have the following type:
 
-```reason
+```rescript
 type listItem = {
   slug: string,
   filename: string,
@@ -68,7 +68,7 @@ type paginated = {
 
 As the server fetch is asynchronous, the two hooks return [AsyncData](https://github.com/bloodyowl/rescript-asyncdata) values:
 
-```reason
+```rescript
 switch blocks {
 | NotAsked
 | Loading => "Loading"->React.string
