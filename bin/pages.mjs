@@ -10,7 +10,9 @@ let command = args[0];
 let entry = args[1];
 let portOrBranch = args[2];
 
-console.log(chalk.blue("ReScript Pages"));
+console.log(`${chalk.white("---")}`);
+console.log(`${chalk.green(`ReScript Pages`)}`);
+console.log(`${chalk.white("---")}`);
 
 function help() {
   console.log("");

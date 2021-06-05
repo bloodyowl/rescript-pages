@@ -8,57 +8,56 @@ global.__ = (localeKey) => localeKey;
 
 let fs = await import("fs");
 
-async function createWebsocketServer(port) {
-  let {default: WebSocket} = await import("ws");
-  let server = new WebSocket.Server({
-    port: port,
-  });
-  let openedConnections = [];
-  server.on("connection", (ws) => {
-    openedConnections.push(ws);
-    ws.on("close", () => {
-      openedConnections = openedConnections.filter((item) => item != ws);
+async function prerenderForConfig(config, mode) {
+  try {
+    let files = await PagesServer.getFiles(config, fs.readFileSync, mode);
+    files.forEach(([filePath, value]) => {
+      fs.mkdirSync(path.dirname(path.join(process.cwd(), filePath)), {
+        recursive: true,
+      });
+      fs.writeFileSync(path.join(process.cwd(), filePath), value, "utf8");
     });
-  });
-  return {
-    send: (message) => {
-      openedConnections.forEach((ws) => ws.send(message));
-    },
-  };
+  } catch (err) {
+    console.log(
+      chalk.white(new Date().toJSON()) +
+        " " +
+        chalk.yellow("Contents") +
+        " " +
+        chalk.red("Error")
+    );
+    console.log(formatError(err));
+  }
 }
 
-async function prerenderForConfig(config, mode) {
-  let files = await PagesServer.getFiles(config, fs.readFileSync, mode);
-  files.forEach(([filePath, value]) => {
-    fs.mkdirSync(path.dirname(path.join(process.cwd(), filePath)), {
-      recursive: true,
-    });
-    fs.writeFileSync(path.join(process.cwd(), filePath), value, "utf8");
-  });
+function formatError(error) {
+  return (
+    "\n" +
+    String(error)
+      .split("\n")
+      .filter((line) => line !== "")
+      .map((line) => chalk.yellow(`    ${line}`))
+      .join("\n") +
+    "\n"
+  );
 }
 
 async function start(entry, devServerPort) {
   let {
     default: { config },
   } = await import(entry);
-  let {default: express} = await import("express");
-  let {default: getPort} = await import("get-port");
+  let { default: express } = await import("express");
+  let { default: createRescriptDevserverTools } = await import(
+    "rescript-devserver-tools"
+  );
   let app = express();
-  let { createFsFromVolume, Volume } = await import("memfs");
-  let volume = new Volume();
-  let outputFileSystem = createFsFromVolume(volume);
-  // rewrite `fs` from now on
-  fs = outputFileSystem;
-  outputFileSystem.isVirtual = true;
-  outputFileSystem.join = path.join.bind(path);
   let chokidar = await import("chokidar");
   let watchedDirectories = new Set();
 
-  async function onContentChange(_) {
-    console.log("Content changed");
-    await prerenderForConfig(config, "development");
-    ws.send("change");
-  }
+  let compilers = PagesServer.getWebpackConfig(
+    config,
+    "development",
+    entry
+  ).map((config) => webpack(config));
 
   let watchDirectories = () => {
     watchedDirectories.forEach((watcher) =>
@@ -79,75 +78,33 @@ async function start(entry, devServerPort) {
     });
   };
 
-  let compiler = webpack(
-    PagesServer.getWebpackConfig(config, "development", entry)
-  );
-  // patch web compilers to write on memory
-  compiler.compilers.forEach((compiler) => {
-    if (compiler.options.target == "web") {
-      compiler.outputFileSystem = outputFileSystem;
+  let postWebpackBuild = async () => {
+    let entryExports = await import(`${entry}?${Date.now()}`);
+    // multiple build occuring, wait for the next one
+    if (entryExports.default !== undefined) {
+      config = entryExports.default.config;
     }
-  });
-
-  let port = await getPort();
-  let ws = await createWebsocketServer(port);
-
-  let suffix = `<script>new WebSocket("ws://localhost:${port}").onmessage = function() {location.reload(true)}</script>`;
-
-  let isFirstRun = true;
-
-  function debounce(func, timeout) {
-    let timeoutId;
-    return (...args) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        func(...args);
-      }, timeout);
-    };
-  }
-
-  let onWebpackChange = debounce(async () => {
     await prerenderForConfig(config, "development");
     watchDirectories();
-    if (!isFirstRun) {
-      ws.send("change");
-    }
-    isFirstRun = false;
-  }, 1000);
+  };
 
-  console.log("Bundling assets");
-  await new Promise((resolve, reject) =>
-    compiler.watch(
-      {
-        aggregateTimeout: 300,
-        poll: undefined,
-      },
-      async (error, stats) => {
-        try {
-          if (error) {
-            reject(error);
-          } else {
-            if (stats.hasErrors()) {
-              let errors = stats.toJson().errors.join("\n");
-              reject(errors);
-            } else {
-              resolve();
-              // reload config
-              let entryExports = await import(`${entry}?${Date.now()}`);
-              if (entryExports.default == undefined) {
-                // multiple build occuring, wait for the next one
-                return;
-              }
-              config = entryExports.default.config;
-              onWebpackChange();
-            }
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      }
-    )
-  );
+  let { middleware, getLiveReloadAppendix, virtualFs, triggerLiveReload } =
+    createRescriptDevserverTools(compilers, {
+      postWebpackBuild,
+    });
+
+  fs = virtualFs;
+
+  async function onContentChange(_) {
+    console.log(
+      chalk.white(new Date().toJSON()) +
+        " " +
+        chalk.yellow("Contents") +
+        " update"
+    );
+    await prerenderForConfig(config, "development");
+    triggerLiveReload();
+  }
 
   watchDirectories();
 
@@ -163,6 +120,8 @@ async function start(entry, devServerPort) {
   }
 
   let pathname = new URL(config.baseUrl).pathname;
+
+  app.use(middleware);
 
   app.use(pathname, (req, res, next) => {
     let url = req.path;
@@ -180,7 +139,11 @@ async function start(entry, devServerPort) {
           let stat = fs.statSync(pathToTry);
           if (stat.isFile()) {
             returned = true;
-            let wsSuffix = pathToTry.endsWith(".html") ? suffix : "";
+            let liveReloadAppendix = getLiveReloadAppendix();
+            let wsSuffix =
+              pathToTry.endsWith(".html") && liveReloadAppendix
+                ? liveReloadAppendix
+                : "";
             let currentPath = pathToTry;
             fs.readFile(currentPath, (err, data) => {
               try {
@@ -232,20 +195,23 @@ async function start(entry, devServerPort) {
       }
     }
   });
-  let serverPort = await (devServerPort || getPort());
-  app.listen(serverPort);
-  console.log(
-    `Dev server running at: ${chalk.green(
-      `http://localhost:${serverPort}${pathname}`
-    )}`
-  );
+  let { default: getPort } = await import("get-port");
+  let port = devServerPort || (await getPort());
+  app.listen(port);
+
+  console.log(`${chalk.cyan("Development server started")}`);
+  console.log(``);
+  console.log(`${chalk.magenta("URL")} -> http://localhost:${port}${pathname}`);
+  console.log(``);
 }
 
 async function build(entry) {
   let {
     default: { config },
   } = await import(entry);
-  console.log("1/2 Bundling assets");
+  console.log(
+    chalk.white(new Date().toJSON()) + " " + chalk.grey("Bundle JS and assets")
+  );
   try {
     await new Promise((resolve, reject) => {
       let compiler = webpack(
@@ -264,13 +230,50 @@ async function build(entry) {
         }
       });
     });
+    console.log(
+      chalk.white(new Date().toJSON()) +
+        " " +
+        chalk.grey("Bundle JS and assets") +
+        " " +
+        chalk.green("Done!")
+    );
   } catch (err) {
-    console.error(err);
+    console.log(
+      chalk.white(new Date().toJSON()) +
+        " " +
+        chalk.grey("Bundle JS and assets") +
+        " " +
+        chalk.red("Error")
+    );
+    console.error(formatError(err));
     process.exit(1);
   }
-  console.log("2/2 Prerendering pages");
-  await prerenderForConfig(config, "production");
-  console.log("Done!");
+  console.log(
+    chalk.white(new Date().toJSON()) + " " + chalk.grey("Pre-render pages")
+  );
+  try {
+    await prerenderForConfig(config, "production");
+  } catch (err) {
+    console.log(
+      chalk.white(new Date().toJSON()) +
+        " " +
+        chalk.grey("Pre-render pages") +
+        " " +
+        chalk.red("Error")
+    );
+    console.error(formatError(err));
+    process.exit(1);
+  }
+  console.log(
+    chalk.white(new Date().toJSON()) +
+      " " +
+      chalk.grey("Pre-render pages") +
+      " " +
+      chalk.green("Done!")
+  );
+  console.log(
+    chalk.white(new Date().toJSON()) + " " + chalk.green("Build done!")
+  );
   return config;
 }
 

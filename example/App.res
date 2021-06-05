@@ -14,6 +14,7 @@ Emotion.injectGlobal(`body {
   font-family: -apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI,
     Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
     sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 #root {
   min-height: 100vh;
@@ -31,6 +32,8 @@ module WidthContainer = {
       "marginLeft": "auto",
       "marginRight": "auto",
       "flexGrow": 1,
+      "display": "flex",
+      "flexDirection": "column",
     })
   }
   @react.component
@@ -49,8 +52,7 @@ module MarkdownBody = {
         "overflowX": "auto",
         "WebkitOverflowScrolling": "touch",
         "fontSize": 16,
-        "borderLeft": `2px solid #333`,
-        "borderLeftWidth": 2,
+        "borderRadius": 8,
       },
       "code": {
         "fontFamily": `SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace`,
@@ -74,21 +76,47 @@ module MarkdownBody = {
     })
   }
   @react.component
-  let make = (~body) => <div className=Styles.text dangerouslySetInnerHTML={{"__html": body}} />
+  let make = (~body, ~additionalStyle=?) =>
+    <div
+      className={switch additionalStyle {
+      | Some(additionalStyle) => Emotion.cx([Styles.text, additionalStyle])
+      | None => Styles.text
+      }}
+      dangerouslySetInnerHTML={{"__html": body}}
+    />
 }
 
 module FeatureBlock = {
   module Styles = {
     open Emotion
-    let container = css({"padding": 20})
-    let title = css({"fontSize": 18, "fontWeight": "normal"})
-    let text = css({"fontSize": 14, "fontWeight": "normal"})
+    let container = css({
+      "padding": 20,
+      "flexGrow": 1,
+      "display": "flex",
+      "flexDirection": "column",
+    })
+    let title = css({"fontSize": 18, "fontWeight": "normal", "fontWeight": "700"})
+    let text = css({
+      "fontSize": 14,
+      "fontWeight": "normal",
+      "flexGrow": 1,
+      "display": "flex",
+      "flexDirection": "column",
+    })
+    let additionalStyle = css({
+      "flexGrow": 1,
+      "display": "flex",
+      "flexDirection": "column",
+      "pre": {"flexGrow": 1},
+    })
   }
   @react.component
   let make = (~title, ~text) => {
     <div className=Styles.container>
       <h2 className=Styles.title> {title->React.string} </h2>
-      <div className=Styles.text> <MarkdownBody body=text /> </div>
+      <div className=Styles.text>
+        <MarkdownBody body=text additionalStyle=Styles.additionalStyle />
+      </div>
     </div>
   }
 }
@@ -99,11 +127,19 @@ module Home = {
     let blocks = css({
       "display": "flex",
       "flexDirection": "row",
+      "alignItems": "stretch",
       "flexWrap": "wrap",
       "@media (max-width: 600px)": {"flexDirection": "column"},
     })
+    let title = css({
+      "fontSize": 50,
+      "textAlign": "center",
+      "padding": "100px 0",
+    })
     let block = css({
       "width": "33.3333%",
+      "display": "flex",
+      "flexDirection": "column",
       "@media (max-width: 600px)": {"width": "100%"},
     })
     let container = css({"flexGrow": 1})
@@ -113,6 +149,7 @@ module Home = {
     let blocks = Pages.useCollection("features", ~direction=#asc)
     <div className=Styles.container>
       <WidthContainer>
+        <div className=Styles.title> {"A dead-simple static website generator"->React.string} </div>
         <div className=Styles.blocks>
           {switch blocks {
           | NotAsked | Loading => <Pages.ActivityIndicator />
@@ -138,16 +175,20 @@ module Docs = {
     let container = css({
       "display": "flex",
       "flexDirection": "row",
-      "alignItems": "stretch",
+      "alignItems": "flex-start",
       "flexGrow": 1,
+      "position": "relative",
       "@media (max-width: 600px)": {"flexDirection": "column-reverse"},
     })
     let body = css({
+      "width": 1,
       "flexGrow": 1,
       "flexShrink": 1,
       "display": "flex",
       "flexDirection": "column",
       "padding": 10,
+      "boxSizing": "border-box",
+      "@media (max-width: 600px)": {"width": "100%"},
     })
 
     let column = css({
@@ -158,6 +199,8 @@ module Docs = {
       "flexShrink": 0,
       "display": "flex",
       "flexDirection": "column",
+      "position": "sticky",
+      "top": 10,
     })
     let link = css({
       "color": "currentColor",
@@ -218,44 +261,52 @@ module Header = {
     let resetLink = css({"color": "currentColor", "textDecoration": "none"})
     let activeLink = css({"fontWeight": "bold"})
     let header = css({
-      "padding": 40,
-      "paddingTop": 20,
-      "paddingBottom": 20,
+      "paddingTop": 10,
+      "paddingBottom": 10,
       "margin": 0,
+      "backgroundColor": "rgba(0, 0, 0, 0.03)",
+    })
+    let headerContents = css({
       "display": "flex",
       "flexDirection": "row",
       "alignItems": "center",
       "justifyContent": "space-between",
-      "color": "#fff",
-      "backgroundColor": "#0A296A",
+      "flexWrap": "wrap",
+      "paddingLeft": 10,
+      "paddingRight": 10,
     })
-    let title = css({"fontSize": 50, "@media (max-width: 600px)": {"fontSize": 18}})
+    let title = css({"fontSize": 18, "textAlign": "center"})
     let navigation = css({"display": "flex", "flexDirection": "row", "alignItems": "center"})
   }
   @react.component
   let make = () => {
     <div className=Styles.header>
-      <Pages.Link href="/" className=Styles.resetLink>
-        <h1 className=Styles.title> {Pages.tr("ReScript Pages")} </h1>
-      </Pages.Link>
-      <div className=Styles.navigation>
-        <Pages.Link href="/" className=Styles.resetLink activeClassName=Styles.activeLink>
-          {Pages.tr("Home")}
-        </Pages.Link>
-        <Spacer width="20px" />
-        <Pages.Link
-          href="/docs/getting-started"
-          matchHref="/docs"
-          className=Styles.resetLink
-          activeClassName=Styles.activeLink
-          matchSubroutes=true>
-          {Pages.tr("Docs")}
-        </Pages.Link>
-        <Spacer width="20px" />
-        <a href="https://github.com/bloodyowl/rescript-pages" className=Styles.resetLink>
-          {Pages.tr("GitHub")}
-        </a>
-      </div>
+      <WidthContainer>
+        <div className=Styles.headerContents>
+          <Pages.Link href="/" className=Styles.resetLink>
+            <h1 className=Styles.title> {Pages.tr("ReScript Pages")} </h1>
+          </Pages.Link>
+          <Spacer width="100px" />
+          <div className=Styles.navigation>
+            <Pages.Link href="/" className=Styles.resetLink activeClassName=Styles.activeLink>
+              {Pages.tr("Home")}
+            </Pages.Link>
+            <Spacer width="40px" />
+            <Pages.Link
+              href="/docs/getting-started"
+              matchHref="/docs"
+              className=Styles.resetLink
+              activeClassName=Styles.activeLink
+              matchSubroutes=true>
+              {Pages.tr("Docs")}
+            </Pages.Link>
+            <Spacer width="40px" />
+            <a href="https://github.com/bloodyowl/rescript-pages" className=Styles.resetLink>
+              {Pages.tr("GitHub")}
+            </a>
+          </div>
+        </div>
+      </WidthContainer>
     </div>
   }
 }

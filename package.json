@@ -4,8 +4,10 @@
   "scripts": {
     "clean": "bsb -clean-world",
     "build": "bsb -make-world",
-    "watch": "bsb -make-world -w",
+    "watch": "bsb -make-world -w -ws 9999",
+    "build-website": "node bin/pages.mjs build example/App.mjs",
     "test": "node bin/pages.mjs build example/App.mjs && retest test/*.mjs",
+    "server": "node bin/pages.mjs start example/App.mjs 3000",
     "test-ci": "retest test/*.mjs"
   },
   "engines": {
@@ -29,7 +31,7 @@
     "@emotion/css": "^11.1.3",
     "@emotion/server": "^11.0.0",
     "bs-fetch": "^0.6.2",
-    "chalk": "^4.1.0",
+    "chalk": "^4.1.1",
     "chokidar": "^3.4.3",
     "copy-webpack-plugin": "^6.3.0",
     "express": "^4.17.1",
@@ -47,6 +49,7 @@
     "reason-highlightjs": "^0.2.1",
     "remarkable": "^2.0.1",
     "rescript-asyncdata": "^2.0.0",
+    "rescript-devserver-tools": "^1.0.15",
     "rescript-future": "^1.0.4",
     "rescript-request": "^1.0.2",
     "script-ext-html-webpack-plugin": "^2.1.5",
@@ -55,11 +58,11 @@
     "ws": "^7.4.0"
   },
   "peerDependencies": {
+    "@emotion/css": "^11.1.3",
     "@rescript/react": "^0.10.1",
     "bs-platform": "^8.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "rescript-asyncdata": "^2.0.0",
-    "@emotion/css": "^11.1.3"
+    "rescript-asyncdata": "^2.0.0"
   }
 }

@@ -2,7 +2,7 @@
 title: Simple API
 ---
 
-You basically have two hooks to access data:
+**You only need two hooks** to access the data from your markdown files. At build time, the system knows what you read from your components.
 
 ```reason
 /* items */
