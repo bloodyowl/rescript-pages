@@ -1,3 +1,11 @@
+## 3.0.0
+
+Changes:
+
+- Use ReScript CLI (8824106)
+- Use @emotion (cfac3ca)
+- Refactor and leverage rescript-devserver-tools (1f55694)
+
 ## 2.0.1
 
 Changes:
