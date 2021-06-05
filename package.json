@@ -2,9 +2,9 @@
   "name": "rescript-pages",
   "version": "2.0.1",
   "scripts": {
-    "clean": "bsb -clean-world",
-    "build": "bsb -make-world",
-    "watch": "bsb -make-world -w -ws 9999",
+    "clean": "rescript clean",
+    "build": "rescript build -with-deps",
+    "watch": "rescript build -with-deps -w -ws 9999",
     "build-website": "node bin/pages.mjs build example/App.mjs",
     "test": "node bin/pages.mjs build example/App.mjs && retest test/*.mjs",
     "server": "node bin/pages.mjs start example/App.mjs 3000",
@@ -24,7 +24,7 @@
   "license": "MIT",
   "devDependencies": {
     "@rescript/react": "^0.10.1",
-    "bs-platform": "^9.0.1",
+    "rescript": "^9.1.3",
     "rescript-test": "^2.0.2"
   },
   "dependencies": {
@@ -60,7 +60,6 @@
   "peerDependencies": {
     "@emotion/css": "^11.1.3",
     "@rescript/react": "^0.10.1",
-    "bs-platform": "^8.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "rescript-asyncdata": "^2.0.0"
