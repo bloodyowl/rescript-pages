@@ -31,7 +31,6 @@ async function prerenderForConfig(config, mode) {
 
 function formatError(error) {
   if (Array.isArray(error)) {
-    console.log(error)
     return error.map(formatError).join("\n\n");
   }
   return (
