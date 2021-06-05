@@ -661,9 +661,7 @@ let getWebpackConfig = (config, mode: mode, entry) => {
         "target": "node",
         "resolve": {
           "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
-          "alias": Js.Dict.fromArray([
-            ("@emotion/css/dist/emotion-css.esm.js", join(dirname, "emotion.mjs")),
-          ]),
+          "alias": Js.Dict.fromArray([("@emotion/css$", join(dirname, "emotion.mjs"))]),
         },
         "experiments": {
           "outputModule": false,
@@ -719,9 +717,7 @@ export default module;`,
         "target": "web",
         "resolve": {
           "modules": [resolve(dirname, "../node_modules"), join(cwd(), "node_modules")],
-          "alias": Js.Dict.fromArray([
-            ("@emotion/css/dist/emotion-css.esm.js", join(dirname, "emotion.mjs")),
-          ]),
+          "alias": Js.Dict.fromArray([("@emotion/css$", join(dirname, "emotion.mjs"))]),
         },
         "experiments": {
           "outputModule": false,

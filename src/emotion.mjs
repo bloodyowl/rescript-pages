@@ -1,4 +1,4 @@
-import createEmotion from "@emotion/css/create-instance";
+import createEmotion from "@emotion/css/create-instance/dist/emotion-css-create-instance.esm.js";
 
 let {
   cache,

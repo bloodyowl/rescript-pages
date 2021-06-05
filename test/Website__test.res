@@ -17,7 +17,8 @@ test("Copies statics", () => {
 test("Adds information to page", () => {
   fileContains(~message="Title", Node.Path.join([Node.Process.cwd(), "dist/index.html"]), `<title data-react-helmet="true">`)
   fileContains(~message="Charset", Node.Path.join([Node.Process.cwd(), "dist/index.html"]), `<meta data-react-helmet="true" charset="UTF-8"/>`)
-  fileContains(~message="Styles", Node.Path.join([Node.Process.cwd(), "dist/index.html"]), `data-emotion-rpcss`)
+  fileContains(~message="Styles", Node.Path.join([Node.Process.cwd(), "dist/index.html"]), `data-emotion="rpcss`)
+  fileContains(~message="Styles", Node.Path.join([Node.Process.cwd(), "dist/index.html"]), `class="rpcss-`)
   fileContains(~message="Initial data", Node.Path.join([Node.Process.cwd(), "dist/index.html"]), `id="initialData"`)
 })
 
