@@ -1,3 +1,9 @@
+## 3.0.1
+
+Changes:
+
+- Better highlight (fcc5367)
+
 ## 3.0.0
 
 Changes:
