@@ -31,3 +31,5 @@ src/**/*.mjs
 example/**/*.mjs
 !src/emotion.mjs
 test/**/*.mjs
+.DS_Store
+.DS_Store?

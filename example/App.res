@@ -1,142 +1,5 @@
 open Belt
-
-module Emotion = {
-  @module("@emotion/css") external css: {..} => string = "css"
-  @module("@emotion/css") external keyframes: {..} => string = "keyframes"
-  @module("@emotion/css") external cx: array<string> => string = "cx"
-
-  @module("@emotion/css") external injectGlobal: string => unit = "injectGlobal"
-}
-
-Emotion.injectGlobal(`body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, SF Pro Display, Segoe UI,
-    Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-`)
-
-Emotion.injectGlobal(`pre, .hljs {
-  color: #adbac7;
-  background: #22272e;
-}
-
-.hljs-doctag,
-.hljs-keyword,
-.hljs-meta .hljs-keyword,
-.hljs-template-tag,
-.hljs-template-variable,
-.hljs-type,
-.hljs-variable.language_ {
-  /* prettylights-syntax-keyword */
-  color: #f47067;
-}
-
-.hljs-title,
-.hljs-title.class_,
-.hljs-title.class_.inherited__,
-.hljs-title.function_ {
-  /* prettylights-syntax-entity */
-  color: #dcbdfb;
-}
-
-.hljs-attr,
-.hljs-attribute,
-.hljs-literal,
-.hljs-meta,
-.hljs-number,
-.hljs-operator,
-.hljs-variable,
-.hljs-selector-attr,
-.hljs-selector-class,
-.hljs-selector-id {
-  /* prettylights-syntax-constant */
-  color: #6cb6ff;
-}
-
-.hljs-regexp,
-.hljs-string,
-.hljs-meta .hljs-string {
-  /* prettylights-syntax-string */
-  color: #96d0ff;
-}
-
-.hljs-built_in,
-.hljs-symbol {
-  /* prettylights-syntax-variable */
-  color: #f69d50;
-}
-
-.hljs-comment,
-.hljs-code,
-.hljs-formula {
-  /* prettylights-syntax-comment */
-  color: #768390;
-}
-
-.hljs-name,
-.hljs-quote,
-.hljs-selector-tag,
-.hljs-selector-pseudo {
-  /* prettylights-syntax-entity-tag */
-  color: #8ddb8c;
-}
-
-.hljs-subst {
-  /* prettylights-syntax-storage-modifier-import */
-  color: #adbac7;
-}
-
-.hljs-section {
-  /* prettylights-syntax-markup-heading */
-  color: #316dca;
-  font-weight: bold;
-}
-
-.hljs-bullet {
-  /* prettylights-syntax-markup-list */
-  color: #eac55f;
-}
-
-.hljs-emphasis {
-  /* prettylights-syntax-markup-italic */
-  color: #adbac7;
-  font-style: italic;
-}
-
-.hljs-strong {
-  /* prettylights-syntax-markup-bold */
-  color: #adbac7;
-  font-weight: bold;
-}
-
-.hljs-addition {
-  /* prettylights-syntax-markup-inserted */
-  color: #b4f1b4;
-  background-color: #1b4721;
-}
-
-.hljs-deletion {
-  /* prettylights-syntax-markup-deleted */
-  color: #ffd8d3;
-  background-color: #78191b;
-}
-
-.hljs-char.escape_,
-.hljs-link,
-.hljs-params,
-.hljs-property,
-.hljs-punctuation,
-.hljs-tag {
-  /* purposely ignored */
-}`)
+include CssReset
 
 module WidthContainer = {
   module Styles = {
@@ -401,6 +264,11 @@ module Header = {
             </Pages.Link>
             <Spacer width="40px" />
             <Pages.Link
+              href="/showcase" className=Styles.resetLink activeClassName=Styles.activeLink>
+              {Pages.tr("Showcase")}
+            </Pages.Link>
+            <Spacer width="40px" />
+            <Pages.Link
               href="/docs/getting-started"
               matchHref="/docs"
               className=Styles.resetLink
@@ -437,6 +305,119 @@ module Footer = {
   }
 }
 
+module ShowcaseWebsite = {
+  module Styles = {
+    open Emotion
+    let container = css({
+      "padding": 20,
+      "flexGrow": 1,
+      "display": "flex",
+      "flexDirection": "column",
+      "color": "inherit",
+      "textDecoration": "none",
+    })
+    let title = css({
+      "fontSize": 18,
+      "fontWeight": "normal",
+      "fontWeight": "700",
+      "textAlign": "center",
+    })
+    let imageContainer = css({
+      "overflow": "hidden",
+      "position": "relative",
+      "paddingBottom": {
+        let ratio = 9.0 /. 16.0 *. 100.0
+        `${ratio->Float.toString}%`
+      },
+      "borderRadius": 15,
+      "boxShadow": "0 0 0 1px rgba(0, 0, 0, 0.1), 0 15px 20px rgba(0, 0, 0, 0.1)",
+      "transform": "translateZ(0)",
+    })
+    let imageContents = css({
+      "position": "absolute",
+      "top": "-100%",
+      "left": 0,
+      "right": 0,
+      "bottom": 0,
+      "transition": "5000ms ease-out transform",
+      "transform": "translateZ(0)",
+      "@media (hover: hover)": {
+        ":hover": {
+          "transform": "translateZ(0) translateY(50%)",
+        },
+      },
+    })
+    let image = css({
+      "position": "absolute",
+      "top": "50%",
+      "left": 0,
+      "width": "100%",
+      "height": "auto",
+      "transition": "5000ms ease-out transform",
+      "transform": "translateZ(0)",
+      "@media (hover: hover)": {
+        ":hover": {
+          "transform": "translateZ(0) translateY(-100%)",
+        },
+      },
+    })
+  }
+  @react.component
+  let make = (~title, ~url, ~image) => {
+    <a href=url className=Styles.container target="_blank">
+      <h2 className=Styles.title> {title->React.string} </h2>
+      <div className=Styles.imageContainer>
+        <div className=Styles.imageContents> <img className=Styles.image alt="" src=image /> </div>
+      </div>
+    </a>
+  }
+}
+
+module Showcase = {
+  module Styles = {
+    open Emotion
+    let container = css({
+      "display": "flex",
+      "flexDirection": "column",
+      "flexGrow": 1,
+    })
+    let title = css({
+      "fontSize": 40,
+      "textAlign": "center",
+      "padding": "30px 0",
+    })
+    let blocks = css({
+      "display": "flex",
+      "flexDirection": "row",
+      "alignItems": "stretch",
+      "flexWrap": "wrap",
+      "@media (max-width: 600px)": {"flexDirection": "column"},
+    })
+    let block = css({
+      "width": "50%",
+      "display": "flex",
+      "flexDirection": "column",
+      "@media (max-width: 600px)": {"width": "100%"},
+    })
+  }
+
+  @react.component
+  let make = () => {
+    <div className=Styles.container>
+      <div className=Styles.title> {"Showcase"->React.string} </div>
+      <div className=Styles.blocks>
+        {ShowcaseWebsiteList.websites
+        ->Array.map(website => {
+          <div key=website.url className=Styles.block>
+            <ShowcaseWebsite title=website.title url=website.url image=website.image />
+          </div>
+        })
+        ->React.array}
+      </div>
+    </div>
+  }
+}
+
 module App = {
   module Styles = {
     open Emotion
@@ -452,6 +433,7 @@ module App = {
       <Header />
       {switch path {
       | list{} => <> <Home /> </>
+      | list{"showcase"} => <> <Showcase /> </>
       | list{"docs", slug} => <> <Docs slug /> </>
       | list{"404.html"} => <div> {"Page not found..."->React.string} </div>
       | _ => <div> {"Page not found..."->React.string} </div>
@@ -462,7 +444,11 @@ module App = {
 }
 
 let getUrlsToPrerender = ({Pages.getAll: getAll}) =>
-  Array.concatMany([["/"], getAll("docs")->Array.map(slug => `/docs/${slug}`), ["404.html"]])
+  Array.concatMany([
+    ["/", "showcase"],
+    getAll("docs")->Array.map(slug => `/docs/${slug}`),
+    ["404.html"],
+  ])
 
 let default = Pages.make(
   App.make,
