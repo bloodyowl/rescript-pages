@@ -7,8 +7,7 @@ module WidthContainer = {
     let container = css({
       "width": "100%",
       "maxWidth": 1000,
-      "marginLeft": "auto",
-      "marginRight": "auto",
+      "margin": "0 auto",
       "flexGrow": 1,
       "display": "flex",
       "flexDirection": "column",
@@ -27,7 +26,6 @@ module MarkdownBody = {
       "pre": {
         "padding": "10px 20px",
         "overflowX": "auto",
-        "WebkitOverflowScrolling": "touch",
         "fontSize": 16,
         "borderRadius": 8,
       },
@@ -90,7 +88,7 @@ module FeatureBlock = {
   }
 }
 
-module Home = {
+module BlockGrid = {
   module Styles = {
     open Emotion
     let blocks = css({
@@ -100,16 +98,36 @@ module Home = {
       "flexWrap": "wrap",
       "@media (max-width: 600px)": {"flexDirection": "column"},
     })
+    let contentsAppear = keyframes({"from": {"opacity": 0.0, "transform": "translateY(10px)"}})
+    let block = css({
+      "display": "flex",
+      "flexDirection": "column",
+      "animation": `300ms ease-out ${contentsAppear} backwards`,
+      "@media (max-width: 600px)": {"width": "100%"},
+    })
+  }
+  @react.component
+  let make = (~children, ~width) => {
+    <div className=Styles.blocks>
+      {children->React.Children.mapWithIndex((item, index) =>
+        <div
+          key={index->Int.toString}
+          style={ReactDOM.Style.make(~animationDelay=`${(index * 200)->Int.toString}ms`, ())}
+          className={Emotion.cx([Styles.block, Emotion.css({"width": width})])}>
+          {item}
+        </div>
+      )}
+    </div>
+  }
+}
+
+module Home = {
+  module Styles = {
+    open Emotion
     let title = css({
       "fontSize": 50,
       "textAlign": "center",
       "padding": "100px 0",
-    })
-    let block = css({
-      "width": "33.3333%",
-      "display": "flex",
-      "flexDirection": "column",
-      "@media (max-width: 600px)": {"width": "100%"},
     })
     let container = css({"flexGrow": 1})
   }
@@ -119,20 +137,16 @@ module Home = {
     <div className=Styles.container>
       <WidthContainer>
         <div className=Styles.title> {"A dead-simple static website generator"->React.string} </div>
-        <div className=Styles.blocks>
-          {switch blocks {
-          | NotAsked | Loading => <Pages.ActivityIndicator />
-          | Done(Error(_)) => <Pages.ErrorIndicator />
-          | Done(Ok({items})) =>
-            items
-            ->Array.map(block =>
-              <div className=Styles.block key=block.slug>
-                <FeatureBlock title=block.title text=block.summary />
-              </div>
-            )
-            ->React.array
-          }}
-        </div>
+        {switch blocks {
+        | NotAsked | Loading => <Pages.ActivityIndicator />
+        | Done(Error(_)) => <Pages.ErrorIndicator />
+        | Done(Ok({items})) =>
+          <BlockGrid width="33.3333%">
+            {items
+            ->Array.map(block => <FeatureBlock title=block.title text=block.summary />)
+            ->React.array}
+          </BlockGrid>
+        }}
       </WidthContainer>
     </div>
   }
@@ -149,12 +163,22 @@ module Docs = {
       "position": "relative",
       "@media (max-width: 600px)": {"flexDirection": "column-reverse"},
     })
+    let loader = css({
+      "display": "flex",
+      "flexGrow": 1,
+      "alignItems": "center",
+      "justifyContent": "center",
+      "padding": "50px 20px",
+    })
+    let contentsAppear = keyframes({"from": {"opacity": 0.0, "transform": "translateY(10px)"}})
+    let contents = css({"animation": `300ms ease-out ${contentsAppear}`})
     let body = css({
       "width": 1,
       "flexGrow": 1,
       "flexShrink": 1,
       "display": "flex",
       "flexDirection": "column",
+      "alignSelf": "stretch",
       "padding": 10,
       "boxSizing": "border-box",
       "@media (max-width: 600px)": {"width": "100%"},
@@ -186,7 +210,7 @@ module Docs = {
       <div className=Styles.container>
         <div className=Styles.column>
           {switch list {
-          | NotAsked | Loading => <Pages.ActivityIndicator />
+          | NotAsked | Loading => <div className=Styles.loader> <Pages.ActivityIndicator /> </div>
           | Done(Error(_)) => <Pages.ErrorIndicator />
           | Done(Ok({items})) => <>
               {items
@@ -205,11 +229,12 @@ module Docs = {
         </div>
         <div className=Styles.body>
           {switch item {
-          | NotAsked | Loading => <Pages.ActivityIndicator />
+          | NotAsked | Loading => <div className=Styles.loader> <Pages.ActivityIndicator /> </div>
           | Done(Error(_)) => <Pages.ErrorIndicator />
-          | Done(Ok(item)) => <>
+          | Done(Ok(item)) =>
+            <div className=Styles.contents>
               <h1> {item.title->React.string} </h1> <MarkdownBody body=item.body />
-            </>
+            </div>
           }}
         </div>
       </div>
@@ -249,6 +274,11 @@ module Header = {
     let title = css({"fontSize": 18, "textAlign": "center"})
     let navigation = css({"display": "flex", "flexDirection": "row", "alignItems": "center"})
   }
+  let links = [
+    (Pages.tr("Home"), "/", None),
+    (Pages.tr("Showcase"), "/showcase", None),
+    (Pages.tr("Docs"), "/docs/getting-started", Some("/docs")),
+  ]
   @react.component
   let make = () => {
     <div className=Styles.header>
@@ -259,23 +289,17 @@ module Header = {
           </Pages.Link>
           <Spacer width="100px" />
           <div className=Styles.navigation>
-            <Pages.Link href="/" className=Styles.resetLink activeClassName=Styles.activeLink>
-              {Pages.tr("Home")}
-            </Pages.Link>
-            <Spacer width="40px" />
-            <Pages.Link
-              href="/showcase" className=Styles.resetLink activeClassName=Styles.activeLink>
-              {Pages.tr("Showcase")}
-            </Pages.Link>
-            <Spacer width="40px" />
-            <Pages.Link
-              href="/docs/getting-started"
-              matchHref="/docs"
-              className=Styles.resetLink
-              activeClassName=Styles.activeLink
-              matchSubroutes=true>
-              {Pages.tr("Docs")}
-            </Pages.Link>
+            {links
+            ->Array.map(((text, href, matchHref)) =>
+              <React.Fragment key=href>
+                <Spacer width="40px" />
+                <Pages.Link
+                  href ?matchHref className=Styles.resetLink activeClassName=Styles.activeLink>
+                  {text}
+                </Pages.Link>
+              </React.Fragment>
+            )
+            ->React.array}
             <Spacer width="40px" />
             <a href="https://github.com/bloodyowl/rescript-pages" className=Styles.resetLink>
               {Pages.tr("GitHub")}
@@ -284,24 +308,6 @@ module Header = {
         </div>
       </WidthContainer>
     </div>
-  }
-}
-
-module Footer = {
-  module Styles = {
-    open Emotion
-    let container = css({
-      "backgroundColor": "#222",
-      "color": "#fff",
-      "textAlign": "center",
-      "padding": 20,
-      "fontSize": 14,
-    })
-  }
-
-  @react.component
-  let make = () => {
-    <div className=Styles.container> {"Copyright 2020 - Matthias Le Brun"->React.string} </div>
   }
 }
 
@@ -342,9 +348,7 @@ module ShowcaseWebsite = {
       "transition": "5000ms ease-out transform",
       "transform": "translateZ(0)",
       "@media (hover: hover)": {
-        ":hover": {
-          "transform": "translateZ(0) translateY(50%)",
-        },
+        ":hover": {"transform": "translateZ(0) translateY(50%)"},
       },
     })
     let image = css({
@@ -357,9 +361,7 @@ module ShowcaseWebsite = {
       "opacity": 0.0,
       "transform": "translateZ(0)",
       "@media (hover: hover)": {
-        ":hover": {
-          "transform": "translateZ(0) translateY(-100%)",
-        },
+        ":hover": {"transform": "translateZ(0) translateY(-100%)"},
       },
     })
     let loadedImage = cx([image, css({"opacity": 1.0})])
@@ -410,19 +412,6 @@ module Showcase = {
       "textAlign": "center",
       "padding": "30px 0",
     })
-    let blocks = css({
-      "display": "flex",
-      "flexDirection": "row",
-      "alignItems": "stretch",
-      "flexWrap": "wrap",
-      "@media (max-width: 600px)": {"flexDirection": "column"},
-    })
-    let block = css({
-      "width": "50%",
-      "display": "flex",
-      "flexDirection": "column",
-      "@media (max-width: 600px)": {"width": "100%"},
-    })
   }
 
   @react.component
@@ -430,15 +419,13 @@ module Showcase = {
     <WidthContainer>
       <div className=Styles.container>
         <div className=Styles.title> {"Showcase"->React.string} </div>
-        <div className=Styles.blocks>
+        <BlockGrid width="50%">
           {ShowcaseWebsiteList.websites
           ->Array.map(website => {
-            <div key=website.url className=Styles.block>
-              <ShowcaseWebsite title=website.title url=website.url image=website.image />
-            </div>
+            <ShowcaseWebsite title=website.title url=website.url image=website.image />
           })
           ->React.array}
-        </div>
+        </BlockGrid>
       </div>
     </WidthContainer>
   }
@@ -448,13 +435,19 @@ module App = {
   module Styles = {
     open Emotion
     let container = css({"display": "flex", "flexDirection": "column", "flexGrow": 1})
+    let footer = css({
+      "backgroundColor": "#222",
+      "color": "#fff",
+      "textAlign": "center",
+      "padding": 20,
+      "fontSize": 14,
+    })
   }
   @react.component
   let make = (~url as {RescriptReactRouter.path: path}, ~config as _) => {
     <div className=Styles.container>
       <Pages.Head>
         <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport" />
-        <style> {"html { font-family: sans-serif }"->React.string} </style>
       </Pages.Head>
       <Header />
       {switch path {
@@ -464,7 +457,7 @@ module App = {
       | list{"404.html"} => <div> {"Page not found..."->React.string} </div>
       | _ => <div> {"Page not found..."->React.string} </div>
       }}
-      <Footer />
+      <div className=Styles.footer> {"Copyright 2021 - Matthias Le Brun"->React.string} </div>
     </div>
   }
 }
