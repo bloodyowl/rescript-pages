@@ -1,3 +1,9 @@
+## 3.0.2
+
+Changes:
+
+- Update chalk (d8293aa)
+
 ## 3.0.1
 
 Changes:
