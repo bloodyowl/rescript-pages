@@ -427,18 +427,20 @@ module Showcase = {
 
   @react.component
   let make = () => {
-    <div className=Styles.container>
-      <div className=Styles.title> {"Showcase"->React.string} </div>
-      <div className=Styles.blocks>
-        {ShowcaseWebsiteList.websites
-        ->Array.map(website => {
-          <div key=website.url className=Styles.block>
-            <ShowcaseWebsite title=website.title url=website.url image=website.image />
-          </div>
-        })
-        ->React.array}
+    <WidthContainer>
+      <div className=Styles.container>
+        <div className=Styles.title> {"Showcase"->React.string} </div>
+        <div className=Styles.blocks>
+          {ShowcaseWebsiteList.websites
+          ->Array.map(website => {
+            <div key=website.url className=Styles.block>
+              <ShowcaseWebsite title=website.title url=website.url image=website.image />
+            </div>
+          })
+          ->React.array}
+        </div>
       </div>
-    </div>
+    </WidthContainer>
   }
 }
 
