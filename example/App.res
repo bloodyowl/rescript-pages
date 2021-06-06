@@ -353,7 +353,8 @@ module ShowcaseWebsite = {
       "left": 0,
       "width": "100%",
       "height": "auto",
-      "transition": "5000ms ease-out transform",
+      "transition": "300ms ease-out opacity, 5000ms ease-out transform",
+      "opacity": 0.0,
       "transform": "translateZ(0)",
       "@media (hover: hover)": {
         ":hover": {
@@ -361,13 +362,36 @@ module ShowcaseWebsite = {
         },
       },
     })
+    let loadedImage = cx([image, css({"opacity": 1.0})])
   }
+
+  external elementAsObject: Dom.element => {..} = "%identity"
+
   @react.component
   let make = (~title, ~url, ~image) => {
+    let imageRef = React.useRef(Js.Nullable.null)
+    let (isImageLoaded, setIsImageLoaded) = React.useState(() => false)
+
+    React.useEffect0(() => {
+      switch imageRef.current->Js.Nullable.toOption {
+      | Some(image) if (image->elementAsObject)["complete"] => setIsImageLoaded(_ => true)
+      | _ => ()
+      }
+      None
+    })
+
     <a href=url className=Styles.container target="_blank">
       <h2 className=Styles.title> {title->React.string} </h2>
       <div className=Styles.imageContainer>
-        <div className=Styles.imageContents> <img className=Styles.image alt="" src=image /> </div>
+        <div className=Styles.imageContents>
+          <img
+            ref={ReactDOM.Ref.domRef(imageRef)}
+            className={isImageLoaded ? Styles.loadedImage : Styles.image}
+            onLoad={_ => setIsImageLoaded(_ => true)}
+            alt=""
+            src=image
+          />
+        </div>
       </div>
     </a>
   }
