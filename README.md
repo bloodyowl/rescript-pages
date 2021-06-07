@@ -1,8 +1,6 @@
 # ReScript Pages
 
 <img src="statics/logo.svg" width="104" height="72" alt="" />
-<br />
-<br />
 
 > Yet another static website generator
 
