@@ -128,6 +128,17 @@ module Home = {
       "fontSize": 50,
       "textAlign": "center",
       "padding": "100px 0",
+      "position": "relative",
+    })
+    let logo = css({
+      "position": "absolute",
+      "left": 0,
+      "top": "50%",
+      "transform": "translateY(-50%) translateX(-30%)",
+      "width": "30vw",
+      "maxWidth": "300px",
+      "height": "auto",
+      "opacity": 0.3,
     })
     let container = css({"flexGrow": 1})
   }
@@ -135,19 +146,22 @@ module Home = {
   let make = () => {
     let blocks = Pages.useCollection("features", ~direction=#asc)
     <div className=Styles.container>
-      <WidthContainer>
-        <div className=Styles.title> {"A dead-simple static website generator"->React.string} </div>
-        {switch blocks {
-        | NotAsked | Loading => <Pages.ActivityIndicator />
-        | Done(Error(_)) => <Pages.ErrorIndicator />
-        | Done(Ok({items})) =>
+      <div className=Styles.title>
+        <img src={Pages.makeVariantUrl("logo.svg")} width="52" height="36" className=Styles.logo />
+        {"A dead-simple static website generator"->React.string}
+      </div>
+      {switch blocks {
+      | NotAsked | Loading => <Pages.ActivityIndicator />
+      | Done(Error(_)) => <Pages.ErrorIndicator />
+      | Done(Ok({items})) =>
+        <WidthContainer>
           <BlockGrid width="33.3333%">
             {items
             ->Array.map(block => <FeatureBlock title=block.title text=block.summary />)
             ->React.array}
           </BlockGrid>
-        }}
-      </WidthContainer>
+        </WidthContainer>
+      }}
     </div>
   }
 }
@@ -259,6 +273,7 @@ module Header = {
       "paddingBottom": 10,
       "margin": 0,
       "backgroundColor": "rgba(0, 0, 0, 0.03)",
+      "position": "relative",
     })
     let headerContents = css({
       "display": "flex",
