@@ -252,6 +252,7 @@ module Header = {
   module Styles = {
     open Emotion
     let resetLink = css({"color": "currentColor", "textDecoration": "none"})
+    let link = cx([resetLink, css({"padding": "10px"})])
     let activeLink = css({"fontWeight": "bold"})
     let header = css({
       "paddingTop": 10,
@@ -265,14 +266,17 @@ module Header = {
       "alignItems": "center",
       "justifyContent": "space-between",
       "flexWrap": "wrap",
-      "paddingLeft": 10,
-      "paddingRight": 10,
-      "@media(max-width: 400px)": {
+      "@media(max-width: 600px)": {
         "flexDirection": "column",
       },
     })
-    let title = css({"fontSize": 18, "textAlign": "center"})
-    let navigation = css({"display": "flex", "flexDirection": "row", "alignItems": "center"})
+    let title = css({"fontSize": 18, "textAlign": "center", "padding": "0 10px"})
+    let navigation = css({
+      "display": "flex",
+      "flexDirection": "row",
+      "justifyContent": "center",
+      "alignItems": "center",
+    })
   }
   let links = [
     (Pages.tr("Home"), "/", None),
@@ -292,16 +296,18 @@ module Header = {
             {links
             ->Array.map(((text, href, matchHref)) =>
               <React.Fragment key=href>
-                <Spacer width="40px" />
                 <Pages.Link
-                  href ?matchHref className=Styles.resetLink activeClassName=Styles.activeLink>
+                  href
+                  ?matchHref
+                  className=Styles.link
+                  activeClassName=Styles.activeLink
+                  matchSubroutes={matchHref->Option.isSome}>
                   {text}
                 </Pages.Link>
               </React.Fragment>
             )
             ->React.array}
-            <Spacer width="40px" />
-            <a href="https://github.com/bloodyowl/rescript-pages" className=Styles.resetLink>
+            <a href="https://github.com/bloodyowl/rescript-pages" className=Styles.link>
               {Pages.tr("GitHub")}
             </a>
           </div>
