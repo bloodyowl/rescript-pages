@@ -393,11 +393,16 @@ module ShowcaseWebsite = {
   @react.component
   let make = (~title, ~url, ~image) => {
     let imageRef = React.useRef(Js.Nullable.null)
-    let (isImageLoaded, setIsImageLoaded) = React.useState(() => false)
+    let (imageRatio, setImageRatio) = React.useState(() => None)
 
     React.useEffect0(() => {
       switch imageRef.current->Js.Nullable.toOption {
-      | Some(image) if (image->elementAsObject)["complete"] => setIsImageLoaded(_ => true)
+      | Some(image) =>
+        let image = image->elementAsObject
+        Js.log(image["complete"])
+        if image["complete"] {
+          setImageRatio(_ => Some(image["naturalHeight"] /. image["naturalWidth"]))
+        }
       | _ => ()
       }
       None
@@ -406,11 +411,24 @@ module ShowcaseWebsite = {
     <a href=url className=Styles.container target="_blank">
       <h2 className=Styles.title> {title->React.string} </h2>
       <div className=Styles.imageContainer>
-        <div className=Styles.imageContents>
+        <div
+          className=Styles.imageContents
+          style=?{imageRatio->Option.map(ratio =>
+            ReactDOM.Style.make(~transitionDuration={Float.toString(ratio *. 2000.) ++ "ms"}, ())
+          )}>
           <img
             ref={ReactDOM.Ref.domRef(imageRef)}
-            className={isImageLoaded ? Styles.loadedImage : Styles.image}
-            onLoad={_ => setIsImageLoaded(_ => true)}
+            className={imageRatio->Option.isSome ? Styles.loadedImage : Styles.image}
+            onLoad={event => {
+              let target = event->ReactEvent.Image.target
+              setImageRatio(_ => Some(target["naturalHeight"] /. target["naturalWidth"]))
+            }}
+            style=?{imageRatio->Option.map(ratio =>
+              ReactDOM.Style.make(
+                ~transitionDuration={"300ms, " ++ Float.toString(ratio *. 2000.) ++ "ms"},
+                (),
+              )
+            )}
             alt=""
             src=image
           />
