@@ -1879,7 +1879,7 @@ jsbn@~0.1.0:
   resolved "https://registry.yarnpkg.com/jsbn/-/jsbn-0.1.1.tgz#a5e654c2e5a2deb5f201d96cefbca80c0ef2f513"
   integrity sha1-peZUwuWi3rXyAdls77yoDA7y9RM=
 
-jsdom@^16.4.0:
+jsdom@16.4.0:
   version "16.4.0"
   resolved "https://registry.yarnpkg.com/jsdom/-/jsdom-16.4.0.tgz#36005bde2d136f73eee1a830c6d45e55408edddb"
   integrity sha512-lYMm3wYdgPhrl7pDcRmvzPhhrGVBeVhPIqeHjzeiHN3DFmD1RBpbExbi8vU7BJdH8VAZYovR8DMt0PNNDM7k8w==
@@ -2744,12 +2744,12 @@ rescript-request@^1.0.2:
   dependencies:
     rescript-future "^1.0.4"
 
-rescript-test@^2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/rescript-test/-/rescript-test-2.0.2.tgz#54d07b473816bd40b7314484a6e172c6a15d9d8c"
-  integrity sha512-BZpUfuatjh5XrcaJZWWfZqkAJ6nTdJTzN9fBwZkAyK4cJbimoVFAZCpZYZm2ZXMkMu+bLH7Gp7/EzOJJXKebWw==
+rescript-test@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/rescript-test/-/rescript-test-3.0.0.tgz#d2242286f2dddad04daace33dfe1e1e0bf336690"
+  integrity sha512-XbM2BLg1GCWgcQ4sbeY8y4XZa+nYOJg0X1FKsHkGG8PlOZPBuQnpqXBUZjZMJxqEaZScIUQ8fREe+QC4cc/CGA==
   dependencies:
-    jsdom "^16.4.0"
+    jsdom "16.4.0"
 
 rescript@^9.1.3:
   version "9.1.3"
