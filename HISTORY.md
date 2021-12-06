@@ -1,3 +1,9 @@
+## 3.0.3
+
+Changes:
+
+- Update i18n (26e7ce7)
+
 ## 3.0.2
 
 Changes:
