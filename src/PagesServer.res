@@ -2,8 +2,8 @@ open Belt
 open Pages
 
 type dirent
-@bs.send external isDirectory: dirent => bool = "isDirectory"
-@bs.send external isFile: dirent => bool = "isFile"
+@send external isDirectory: dirent => bool = "isDirectory"
+@send external isFile: dirent => bool = "isFile"
 @get external name: dirent => string = "name"
 @module("fs") external readdirSync: (string, {..}) => array<dirent> = "readdirSync"
 @module("fs") external readFileSync: (string, @as("utf8") _) => string = "readFileSync"
@@ -37,8 +37,8 @@ type remarkablePlugin
 
 @new @module("remarkable")
 external remarkable: (string, config) => remarkable = "Remarkable"
-@bs.send external render: (remarkable, string) => string = "render"
-@bs.send external use: (remarkable, remarkablePlugin) => unit = "use"
+@send external render: (remarkable, string) => string = "render"
+@send external use: (remarkable, remarkablePlugin) => unit = "use"
 
 @module("remarkable/dist/cjs/linkify.js")
 external linkify: remarkablePlugin = "linkify"
@@ -55,7 +55,7 @@ type language
 @module("reason-highlightjs") external reason: language = "default"
 @module("./rescript-highlightjs.cjs") external rescript: language = "default"
 
-@bs.send
+@send
 external registerLanguage: (hjs, string, language) => unit = "registerLanguage"
 
 hjs->registerLanguage("reason", reason)
@@ -68,7 +68,7 @@ type emotionCache
 external createEmotionServer: emotionCache => emotionServer = "default"
 @get external getEmotionCache: Pages.emotion => emotionCache = "cache"
 
-@bs.send
+@send
 external renderStylesToString: (emotionServer, string) => string = "renderStylesToString"
 
 let remarkable = remarkable(

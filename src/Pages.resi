@@ -57,11 +57,11 @@ type paginated<'a> = {
   items: array<'a>,
 }
 
-@bs.val external variantBasePath: string = "process.env.PAGES_PATH"
-@bs.val external basePath: string = "process.env.PAGES_ROOT"
+@val external variantBasePath: string = "process.env.PAGES_PATH"
+@val external basePath: string = "process.env.PAGES_ROOT"
 
-@bs.val external t: string => string = "__"
-@bs.val external tr: string => React.element = "__"
+@val external t: string => string = "__"
+@val external tr: string => React.element = "__"
 
 let makeVariantUrl: string => string
 let makeBaseUrl: string => string

@@ -1737,10 +1737,10 @@ inherits@2.0.3:
   resolved "https://registry.yarnpkg.com/inherits/-/inherits-2.0.3.tgz#633c2c83e3da42a502f52466022480f4208261de"
   integrity sha1-Yzwsg+PaQqUC9SRmAiSA9CCCYd4=
 
-inline-translations-webpack-plugin@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/inline-translations-webpack-plugin/-/inline-translations-webpack-plugin-1.0.1.tgz#381593eb48d65755ac0c597758c77568f81f8bf6"
-  integrity sha512-r/6SKH9AUDi5SGdqW0jCpio6gcixQYurRKBWXRJAJzLS2kw9SLW+fy87xEP+4upUuWy9Tf1kwMQiPAoo6HJh7w==
+inline-translations-webpack-plugin@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/inline-translations-webpack-plugin/-/inline-translations-webpack-plugin-1.0.2.tgz#53293639259f7e722ce42e11615ccdc3992ec4ff"
+  integrity sha512-IwvLpHE6R+5z+G+zuzqi72Nwji57fy9ivCjXvTn/qDYIeKD35EesXId8dRss4vQdUM7gJzL7kZUIGIY8VpZzqQ==
 
 interpret@^2.2.0:
   version "2.2.0"
