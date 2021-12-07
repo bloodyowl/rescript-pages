@@ -1,6 +1,6 @@
 # ReScript Pages
 
-<img src="statics/logo.svg" width="104" height="72" alt="" />
+<img src="statics/Logo.png" width="104" height="104" alt="" />
 
 > Yet another static website generator
 
@@ -9,7 +9,7 @@
 - **Markdown collection based content**: Write markdown files in directories, the directories become _collections_, the files become _items_
 - **Completely over-engineered**: generates a Single-Page-Application that kicks in after the initial load, loading the minimum delta to transition to the next page
 - **Simple API**: you basically have two hooks to get data:
-  - `useItem(collection, ~id)`, 
+  - `useItem(collection, ~id)`,
   - `useCollection(collection, ~page=1, ~direction=#desc)`
 - **Pagination**: You define the page size in your config, the generator creates the correct pagination
 - **RSS & Sitemap** generation

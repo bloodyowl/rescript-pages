@@ -129,16 +129,13 @@ module Home = {
       "textAlign": "center",
       "padding": "100px 0",
       "position": "relative",
+      "background": "#eee",
+      "color": "#222",
     })
     let logo = css({
-      "position": "absolute",
-      "left": 0,
-      "top": "50%",
-      "transform": "translateY(-50%) translateX(-30%)",
-      "width": "30vw",
-      "maxWidth": "300px",
       "height": "auto",
-      "opacity": 0.3,
+      "display": "block",
+      "margin": "0 auto",
     })
     let container = css({"flexGrow": 1})
   }
@@ -147,7 +144,9 @@ module Home = {
     let blocks = Pages.useCollection("features", ~direction=#asc)
     <div className=Styles.container>
       <div className=Styles.title>
-        <img src={Pages.makeVariantUrl("logo.svg")} width="52" height="36" className=Styles.logo />
+        <img
+          src={Pages.makeVariantUrl("Logo.png")} width="256" height="256" className=Styles.logo
+        />
         {"A dead-simple static website generator"->React.string}
       </div>
       {switch blocks {
@@ -285,7 +284,14 @@ module Header = {
         "flexDirection": "column",
       },
     })
-    let title = css({"fontSize": 18, "textAlign": "center", "padding": "0 10px"})
+    let title = css({
+      "fontSize": 18,
+      "textAlign": "center",
+      "padding": "0 10px",
+      "display": "flex",
+      "flexDirection": "row",
+      "alignItems": "center",
+    })
     let navigation = css({
       "display": "flex",
       "flexDirection": "row",
@@ -304,7 +310,10 @@ module Header = {
       <WidthContainer>
         <div className=Styles.headerContents>
           <Pages.Link href="/" className=Styles.resetLink>
-            <h1 className=Styles.title> {Pages.tr("ReScript Pages")} </h1>
+            <h1 className=Styles.title>
+              <img src={Pages.makeVariantUrl("Logo.png")} width="64" height="64" />
+              <span> {Pages.tr("ReScript Pages")} </span>
+            </h1>
           </Pages.Link>
           <Spacer width="100px" />
           <div className=Styles.navigation>
