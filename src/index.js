@@ -18,14 +18,18 @@ async function prerenderForConfig(config, mode) {
       fs.writeFileSync(path.join(process.cwd(), filePath), value, "utf8");
     });
   } catch (err) {
-    console.log(
-      chalk.white(new Date().toJSON()) +
-        " " +
-        chalk.yellow("Contents") +
-        " " +
-        chalk.red("Error")
-    );
-    console.log(formatError(err));
+    if (mode == "production") {
+      throw err;
+    } else {
+      console.log(
+        chalk.white(new Date().toJSON()) +
+          " " +
+          chalk.yellow("Contents") +
+          " " +
+          chalk.red("Error")
+      );
+      console.log(formatError(err));
+    }
   }
 }
 
