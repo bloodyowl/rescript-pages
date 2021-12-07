@@ -1,3 +1,9 @@
+## 3.0.4
+
+Fixes:
+
+- Break CI on yaml error (72d57ce)
+
 ## 3.0.3
 
 Changes:
