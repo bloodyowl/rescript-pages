@@ -1,3 +1,9 @@
+## 3.1.0
+
+Changes:
+
+- Update ReScript (2ea0652)
+
 ## 3.0.4
 
 Fixes:
