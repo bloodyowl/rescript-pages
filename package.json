@@ -1,6 +1,6 @@
 {
   "name": "rescript-pages",
-  "version": "3.0.4",
+  "version": "3.1.0",
   "scripts": {
     "clean": "rescript clean",
     "build": "rescript build -with-deps",
