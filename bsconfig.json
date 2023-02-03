@@ -34,6 +34,5 @@
   "bs-dev-dependencies": ["rescript-test"],
   "warnings": {
     "error": "+101"
-  },
-  "refmt": 3
+  }
 }
