@@ -72,7 +72,7 @@ module ServerUrlContext = {
   let context = React.createContext(None)
 
   module Provider = {
-    let make = context->React.Context.provider(context)
+    let make = React.Context.provider(context)
   }
 }
 
@@ -153,6 +153,7 @@ module Link = {
       ? Js.String.startsWith(compareHref, path ++ "/") || Js.String.startsWith(compareHref, path)
       : path === compareHref || path ++ "/" === compareHref
     let href = makeVariantUrl(href)
+
     <a
       href
       ?title
@@ -429,11 +430,16 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
 
 @get external textContent: Dom.element => string = "textContent"
 
+module ProvidedApp = {
+  type props<'url, 'config> = {url: 'url, config: 'config}
+}
+
 module App = {
   @react.component
   let make = (~config, ~app) => {
     let url = useUrl()
-    React.createElement(app, {"url": url, "config": config})
+
+    React.createElement(app, ({url, config}: ProvidedApp.props<RescriptReactRouter.url, config>))
   }
 }
 
@@ -448,18 +454,17 @@ let start = (app, config) => {
     ->Option.map(Js.Json.deserializeUnsafe)
   switch (root, initialData, pagesBootMode) {
   | (Some(root), Some(initialData), #hydrate) =>
-    ReactDOM.hydrate(
+    let _ = ReactDOM.Client.hydrateRoot(
+      root,
       <Context config value=initialData>
         <App app config />
       </Context>,
-      root,
     )
   | (Some(root), None, #hydrate | #render) | (Some(root), Some(_), #render) =>
-    ReactDOM.render(
+    ReactDOM.Client.createRoot(root)->ReactDOM.Client.Root.render(
       <Context config>
         <App app config />
       </Context>,
-      root,
     )
   | (None, _, _) => Js.Console.error(`Can't find the app's root container`)
   }
@@ -470,21 +475,14 @@ type emotion
 @module external emotion: emotion = "@emotion/css"
 
 type app = {
-  app: React.component<{"config": config, "url": RescriptReactRouter.url}>,
-  container: React.component<{
-    "config": config,
-    "app": React.component<{
-      "config": config,
-      "url": RescriptReactRouter.url,
-    }>,
-  }>,
+  app: React.component<ProvidedApp.props<RescriptReactRouter.url, config>>,
+  container: React.component<
+    App.props<config, React.component<ProvidedApp.props<RescriptReactRouter.url, config>>>,
+  >,
   config: config,
-  provider: React.component<{
-    "config": config,
-    "serverUrl": option<RescriptReactRouter.url>,
-    "value": option<Context.t>,
-    "children": React.element,
-  }>,
+  provider: React.component<
+    Context.props<Context.t, RescriptReactRouter.url, config, React.element>,
+  >,
   emotion: emotion,
 }
 

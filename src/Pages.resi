@@ -78,6 +78,14 @@ module Context: {
     mutable itemsRequests: Belt.MutableMap.String.t<Belt.Set.String.t>,
   }
   type context = (t, (t => t) => unit)
+
+  @react.component
+  let make: (
+    ~value: t=?,
+    ~serverUrl: RescriptReactRouter.url=?,
+    ~config: config,
+    ~children: React.element,
+  ) => React.element
 }
 
 module Link: {
@@ -123,33 +131,30 @@ let useCollection: (
 
 let useItem: (string, ~id: string) => AsyncData.t<result<item, error>>
 
+module ProvidedApp: {
+  type props<'url, 'config> = {url: 'url, config: 'config}
+}
+
 module App: {
   @react.component
   let make: (
     ~config: config,
-    ~app: React.component<{"config": config, "url": RescriptReactRouter.url}>,
+    ~app: React.component<ProvidedApp.props<RescriptReactRouter.url, config>>,
   ) => React.element
 }
 
 type emotion
 
 type app = {
-  app: React.component<{"config": config, "url": RescriptReactRouter.url}>,
-  container: React.component<{
-    "config": config,
-    "app": React.component<{
-      "config": config,
-      "url": RescriptReactRouter.url,
-    }>,
-  }>,
+  app: React.component<ProvidedApp.props<RescriptReactRouter.url, config>>,
+  container: React.component<
+    App.props<config, React.component<ProvidedApp.props<RescriptReactRouter.url, config>>>,
+  >,
   config: config,
-  provider: React.component<{
-    "value": option<Context.t>,
-    "serverUrl": option<RescriptReactRouter.url>,
-    "config": config,
-    "children": React.element,
-  }>,
+  provider: React.component<
+    Context.props<Context.t, RescriptReactRouter.url, config, React.element>,
+  >,
   emotion: emotion,
 }
 
-let make: (React.component<{"config": config, "url": RescriptReactRouter.url}>, config) => app
+let make: (React.component<ProvidedApp.props<RescriptReactRouter.url, config>>, config) => app
