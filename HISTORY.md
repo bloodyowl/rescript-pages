@@ -1,3 +1,9 @@
+## 3.1.1
+
+Changes:
+
+- Fix context provider (fec5b96, 579cdb9)
+
 ## 3.1.0
 
 Changes:
