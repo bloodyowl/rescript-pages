@@ -72,14 +72,7 @@ module ServerUrlContext = {
   let context = React.createContext(None)
 
   module Provider = {
-    @obj
-    external makeProps: (
-      ~value: option<RescriptReactRouter.url>,
-      ~children: React.element,
-      ~key: string=?,
-      unit,
-    ) => {"value": option<RescriptReactRouter.url>, "children": React.element} = ""
-    let make = context->React.Context.provider
+    let make = context->React.Context.provider(context)
   }
 }
 
