@@ -251,7 +251,9 @@ module ErrorIndicator = {
 module Redirect = {
   @react.component
   let make = (~url) => {
-    <Head> <meta httpEquiv="refresh" content={`0;URL=${url}`} /> </Head>
+    <Head>
+      <meta httpEquiv="refresh" content={`0;URL=${url}`} />
+    </Head>
   }
 }
 
@@ -273,13 +275,7 @@ module Context = {
   let context = React.createContext((default, defaultSetState))
 
   module Provider = {
-    @obj
-    external makeProps: (
-      ~value: context,
-      ~children: React.element,
-      unit,
-    ) => {"value": context, "children": React.element} = ""
-    let make = context->React.Context.provider
+    let make = React.Context.provider(context)
   }
 
   @react.component
@@ -320,13 +316,19 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
       let status = AsyncData.Loading
       setContext(context => {
         ...context,
-        lists: context.lists->Map.String.update(collection, collection => Some(
-          collection
-          ->Option.getWithDefault(Map.String.empty)
-          ->Map.String.update(direction, sortedCollection => Some(
-            sortedCollection->Option.getWithDefault(Map.Int.empty)->Map.Int.set(page, status),
-          )),
-        )),
+        lists: context.lists->Map.String.update(
+          collection,
+          collection => Some(
+            collection
+            ->Option.getWithDefault(Map.String.empty)
+            ->Map.String.update(
+              direction,
+              sortedCollection => Some(
+                sortedCollection->Option.getWithDefault(Map.Int.empty)->Map.Int.set(page, status),
+              ),
+            ),
+          ),
+        ),
       })
       let url = makeVariantUrl(`api/${collection}/pages/${direction}/${page->Int.toString}.json`)
       let future =
@@ -340,18 +342,26 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
         )
 
       future->Future.get(result => {
-        setContext(context => {
-          ...context,
-          lists: context.lists->Map.String.update(collection, collection => Some(
-            collection
-            ->Option.getWithDefault(Map.String.empty)
-            ->Map.String.update(direction, sortedCollection => Some(
-              sortedCollection
-              ->Option.getWithDefault(Map.Int.empty)
-              ->Map.Int.set(page, Done(result)),
-            )),
-          )),
-        })
+        setContext(
+          context => {
+            ...context,
+            lists: context.lists->Map.String.update(
+              collection,
+              collection => Some(
+                collection
+                ->Option.getWithDefault(Map.String.empty)
+                ->Map.String.update(
+                  direction,
+                  sortedCollection => Some(
+                    sortedCollection
+                    ->Option.getWithDefault(Map.Int.empty)
+                    ->Map.Int.set(page, Done(result)),
+                  ),
+                ),
+              ),
+            ),
+          },
+        )
       })
 
       Some(() => future->Future.cancel)
@@ -380,9 +390,12 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
       let status = AsyncData.Loading
       setContext(context => {
         ...context,
-        items: context.items->Map.String.update(collection, collection => Some(
-          collection->Option.getWithDefault(Map.String.empty)->Map.String.set(id, status),
-        )),
+        items: context.items->Map.String.update(
+          collection,
+          collection => Some(
+            collection->Option.getWithDefault(Map.String.empty)->Map.String.set(id, status),
+          ),
+        ),
       })
       let url = makeVariantUrl(`/api/${collection}/items/${id}.json`)
       let future =
@@ -396,12 +409,19 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
         )
 
       future->Future.get(result => {
-        setContext(context => {
-          ...context,
-          items: context.items->Map.String.update(collection, collection => Some(
-            collection->Option.getWithDefault(Map.String.empty)->Map.String.set(id, Done(result)),
-          )),
-        })
+        setContext(
+          context => {
+            ...context,
+            items: context.items->Map.String.update(
+              collection,
+              collection => Some(
+                collection
+                ->Option.getWithDefault(Map.String.empty)
+                ->Map.String.set(id, Done(result)),
+              ),
+            ),
+          },
+        )
       })
 
       Some(() => future->Future.cancel)
@@ -435,9 +455,19 @@ let start = (app, config) => {
     ->Option.map(Js.Json.deserializeUnsafe)
   switch (root, initialData, pagesBootMode) {
   | (Some(root), Some(initialData), #hydrate) =>
-    ReactDOM.hydrate(<Context config value=initialData> <App app config /> </Context>, root)
+    ReactDOM.hydrate(
+      <Context config value=initialData>
+        <App app config />
+      </Context>,
+      root,
+    )
   | (Some(root), None, #hydrate | #render) | (Some(root), Some(_), #render) =>
-    ReactDOM.render(<Context config> <App app config /> </Context>, root)
+    ReactDOM.render(
+      <Context config>
+        <App app config />
+      </Context>,
+      root,
+    )
   | (None, _, _) => Js.Console.error(`Can't find the app's root container`)
   }
 }
@@ -469,5 +499,5 @@ let make = (app, config) => {
   if Js.typeof(window) != "undefined" {
     start(app, config)
   }
-  {app: app, container: App.make, config: config, provider: Context.make, emotion: emotion}
+  {app, container: App.make, config, provider: Context.make, emotion}
 }
