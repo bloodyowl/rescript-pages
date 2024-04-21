@@ -40,8 +40,9 @@ The posts will be sorted by filename, but you can specify custom slugs.
 You'll need to create a React component with the following signature:
 
 ```rescript
-@react.component
-let make = (~url: ReasonReact.Router.url, ~config: Pages.config) => React.element
+type props = Pages.App.appProps
+
+let make = (Pages.App.appProps) => React.element
 ```
 
 And then expose your application:

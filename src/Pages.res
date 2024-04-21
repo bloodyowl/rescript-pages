@@ -1,4 +1,4 @@
-open Belt
+open! Belt
 
 type listItem = {
   slug: string,
@@ -72,7 +72,7 @@ module ServerUrlContext = {
   let context = React.createContext(None)
 
   module Provider = {
-    let make = context->React.Context.provider(context)
+    let make = context->React.Context.provider
   }
 }
 
@@ -89,15 +89,12 @@ let pathParse = str =>
     | _ => raw
     }
     /* remove search portion if present in string */
-    let raw = switch raw |> Js.String.splitAtMost("?", ~limit=2) {
+    let raw = switch Js.String.splitAtMost("?", ~limit=2, raw) {
     | [path, _] => path
     | _ => raw
     }
 
-    raw
-    |> Js.String.split("/")
-    |> Js.Array.filter(item => String.length(item) != 0)
-    |> List.fromArray
+    List.fromArray(Js.Array.filter(item => String.length(item) != 0, Js.String.split("/", raw)))
   }
 
 @val external variantBasePath: string = "process.env.PAGES_PATH"
@@ -118,15 +115,15 @@ let useUrl = () => {
 
 let join = (s1, s2) =>
   `${s1}/${s2}`
-  ->Js.String2.replaceByRe(%re("/:\/\//g"), "__PROTOCOL__")
-  ->Js.String2.replaceByRe(%re("/\/+/g"), "/")
-  ->Js.String2.replaceByRe(%re("/__PROTOCOL__/g"), "://")
+  ->String.replaceRegExp(%re("/:\/\//g"), "__PROTOCOL__")
+  ->String.replaceRegExp(%re("/\/+/g"), "/")
+  ->String.replaceRegExp(%re("/__PROTOCOL__/g"), "://")
 
 @val external t: string => string = "__"
 @val external tr: string => React.element = "__"
 
-let makeVariantUrl = join(variantBasePath)
-let makeBaseUrl = join(basePath)
+let makeVariantUrl = value => join(variantBasePath, value)
+let makeBaseUrl = value => join(basePath, value)
 
 module Emotion = {
   @module("@emotion/css") external css: {..} => string = "css"
@@ -147,7 +144,7 @@ module Link = {
     ~children,
   ) => {
     let url = useUrl()
-    let path = "/" ++ String.concat("/", url.path)
+    let path = "/" ++ url.path->List.toArray->Array.joinWith("/", x => x)
     let compareHref = matchHref->Option.getWithDefault(href)
     let isActive = matchSubroutes
       ? Js.String.startsWith(compareHref, path ++ "/") || Js.String.startsWith(compareHref, path)
@@ -268,11 +265,11 @@ module Context = {
   let context = React.createContext((default, defaultSetState))
 
   module Provider = {
-    let make = React.Context.provider(context)
+    let make = context->React.Context.provider
   }
 
   @react.component
-  let make = (~value: option<t>=?, ~serverUrl=?, ~config, ~children) => {
+  let make = (~value: option<t>, ~serverUrl=?, ~config, ~children) => {
     let (value, setValue) = React.useState(() => value->Option.getWithDefault(default))
 
     <ServerUrlContext.Provider value=serverUrl>
@@ -430,10 +427,15 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
 @get external textContent: Dom.element => string = "textContent"
 
 module App = {
+  type appProps = {
+    url: RescriptReactRouter.url,
+    config: config,
+  }
+
   @react.component
   let make = (~config, ~app) => {
     let url = useUrl()
-    React.createElement(app, {"url": url, "config": config})
+    React.createElement(app, {url, config})
   }
 }
 
@@ -441,25 +443,24 @@ type bootMode = [#hydrate | #render]
 @val external pagesBootMode: bootMode = "window.PAGES_BOOT_MODE"
 
 let start = (app, config) => {
-  let root = ReactDOM.querySelector("#root")
+  let rootElement = ReactDOM.querySelector("#root")
   let initialData =
     ReactDOM.querySelector("#initialData")
     ->Option.map(textContent)
     ->Option.map(Js.Json.deserializeUnsafe)
-  switch (root, initialData, pagesBootMode) {
-  | (Some(root), Some(initialData), #hydrate) =>
-    ReactDOM.hydrate(
+  switch (rootElement, initialData, pagesBootMode) {
+  | (Some(rootElement), Some(initialData), #hydrate) =>
+    let _ = ReactDOM.Client.hydrateRoot(
+      rootElement,
       <Context config value=initialData>
         <App app config />
       </Context>,
-      root,
     )
   | (Some(root), None, #hydrate | #render) | (Some(root), Some(_), #render) =>
-    ReactDOM.render(
-      <Context config>
+    ReactDOM.Client.createRoot(root)->ReactDOM.Client.Root.render(
+      <Context config value=None>
         <App app config />
       </Context>,
-      root,
     )
   | (None, _, _) => Js.Console.error(`Can't find the app's root container`)
   }
@@ -470,21 +471,12 @@ type emotion
 @module external emotion: emotion = "@emotion/css"
 
 type app = {
-  app: React.component<{"config": config, "url": RescriptReactRouter.url}>,
-  container: React.component<{
-    "config": config,
-    "app": React.component<{
-      "config": config,
-      "url": RescriptReactRouter.url,
-    }>,
-  }>,
+  app: React.component<App.appProps>,
+  container: React.component<App.props<config, React.component<App.appProps>>>,
   config: config,
-  provider: React.component<{
-    "config": config,
-    "serverUrl": option<RescriptReactRouter.url>,
-    "value": option<Context.t>,
-    "children": React.element,
-  }>,
+  provider: React.component<
+    Context.props<option<Context.t>, RescriptReactRouter.url, config, React.element>,
+  >,
   emotion: emotion,
 }
 
