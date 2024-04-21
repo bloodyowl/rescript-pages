@@ -1,3 +1,9 @@
+## 4.0.0
+
+Changes:
+
+- Upgrade to ReScript 11 (c6f9fd8)
+
 ## 3.1.1
 
 Changes:
