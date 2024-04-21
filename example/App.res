@@ -1,4 +1,4 @@
-open Belt
+open! Belt
 include CssReset
 
 module WidthContainer = {
@@ -156,7 +156,9 @@ module Home = {
         <WidthContainer>
           <BlockGrid width="33.3333%">
             {items
-            ->Array.map(block => <FeatureBlock title=block.title text=block.summary />)
+            ->Array.map(block =>
+              <FeatureBlock key={block.slug} title=block.title text=block.summary />
+            )
             ->React.array}
           </BlockGrid>
         </WidthContainer>
@@ -223,9 +225,13 @@ module Docs = {
       <div className=Styles.container>
         <div className=Styles.column>
           {switch list {
-          | NotAsked | Loading => <div className=Styles.loader> <Pages.ActivityIndicator /> </div>
+          | NotAsked | Loading =>
+            <div className=Styles.loader>
+              <Pages.ActivityIndicator />
+            </div>
           | Done(Error(_)) => <Pages.ErrorIndicator />
-          | Done(Ok({items})) => <>
+          | Done(Ok({items})) =>
+            <>
               {items
               ->Array.map(item =>
                 <Pages.Link
@@ -242,11 +248,15 @@ module Docs = {
         </div>
         <div className=Styles.body>
           {switch item {
-          | NotAsked | Loading => <div className=Styles.loader> <Pages.ActivityIndicator /> </div>
+          | NotAsked | Loading =>
+            <div className=Styles.loader>
+              <Pages.ActivityIndicator />
+            </div>
           | Done(Error(_)) => <Pages.ErrorIndicator />
           | Done(Ok(item)) =>
             <div className=Styles.contents>
-              <h1> {item.title->React.string} </h1> <MarkdownBody body=item.body />
+              <h1> {item.title->React.string} </h1>
+              <MarkdownBody body=item.body />
             </div>
           }}
         </div>
@@ -401,14 +411,14 @@ module ShowcaseWebsite = {
 
   @react.component
   let make = (~title, ~url, ~image) => {
-    let imageRef = React.useRef(Js.Nullable.null)
+    let imageRef = React.useRef(Nullable.null)
     let (imageRatio, setImageRatio) = React.useState(() => None)
 
     React.useEffect0(() => {
-      switch imageRef.current->Js.Nullable.toOption {
+      switch imageRef.current->Nullable.toOption {
       | Some(image) =>
         let image = image->elementAsObject
-        Js.log(image["complete"])
+        Console.log(image["complete"])
         if image["complete"] {
           setImageRatio(_ => Some(image["naturalHeight"] /. image["naturalWidth"]))
         }
@@ -470,7 +480,9 @@ module Showcase = {
         <BlockGrid width="50%">
           {ShowcaseWebsiteList.websites
           ->Array.map(website => {
-            <ShowcaseWebsite title=website.title url=website.url image=website.image />
+            <ShowcaseWebsite
+              key=website.url title=website.title url=website.url image=website.image
+            />
           })
           ->React.array}
         </BlockGrid>
@@ -491,17 +503,27 @@ module App = {
       "fontSize": 14,
     })
   }
-  @react.component
-  let make = (~url as {RescriptReactRouter.path: path}, ~config as _) => {
+  type props = Pages.App.appProps
+
+  let make = ({url: {path}}: props) => {
     <div className=Styles.container>
       <Pages.Head>
         <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport" />
       </Pages.Head>
       <Header />
       {switch path {
-      | list{} => <> <Home /> </>
-      | list{"showcase"} => <> <Showcase /> </>
-      | list{"docs", slug} => <> <Docs slug /> </>
+      | list{} =>
+        <>
+          <Home />
+        </>
+      | list{"showcase"} =>
+        <>
+          <Showcase />
+        </>
+      | list{"docs", slug} =>
+        <>
+          <Docs slug />
+        </>
       | list{"404.html"} => <div> {"Page not found..."->React.string} </div>
       | _ => <div> {"Page not found..."->React.string} </div>
       }}
@@ -532,10 +554,10 @@ let default = Pages.make(
         subdirectory: None,
         localeFile: None,
         contentDirectory: "contents",
-        getUrlsToPrerender: getUrlsToPrerender,
+        getUrlsToPrerender,
         getRedirectMap: Some(
           _ => {
-            Js.Dict.fromArray([("old_url", "new_url")])
+            Dict.fromArray([("old_url", "new_url")])
           },
         ),
       },

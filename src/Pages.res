@@ -1,12 +1,10 @@
-open Belt
-
 type listItem = {
   slug: string,
   filename: string,
   title: string,
   date: option<string>,
   draft: bool,
-  meta: Js.Dict.t<Js.Json.t>,
+  meta: Dict.t<JSON.t>,
   summary: string,
 }
 
@@ -16,7 +14,7 @@ type item = {
   title: string,
   date: option<string>,
   draft: bool,
-  meta: Js.Dict.t<Js.Json.t>,
+  meta: Dict.t<JSON.t>,
   body: string,
 }
 
@@ -31,7 +29,7 @@ type variant = {
   localeFile: option<string>,
   contentDirectory: string,
   getUrlsToPrerender: urlStore => array<string>,
-  getRedirectMap: option<urlStore => Js.Dict.t<string>>,
+  getRedirectMap: option<urlStore => Dict.t<string>>,
 }
 
 type mode = SPA | Static
@@ -72,7 +70,7 @@ module ServerUrlContext = {
   let context = React.createContext(None)
 
   module Provider = {
-    let make = context->React.Context.provider(context)
+    let make = context->React.Context.provider
   }
 }
 
@@ -82,22 +80,19 @@ let pathParse = str =>
   | "" | "/" => list{}
   | raw =>
     /* remove the preceeding /, which every pathname seems to have */
-    let raw = Js.String.sliceToEnd(~from=1, raw)
+    let raw = String.sliceToEnd(~start=1, raw)
     /* remove the trailing /, which some pathnames might have. Ugh */
-    let raw = switch Js.String.get(raw, Js.String.length(raw) - 1) {
-    | "/" => Js.String.slice(~from=0, ~to_=-1, raw)
+    let raw = switch String.get(raw, String.length(raw) - 1) {
+    | Some("/") => String.slice(~start=0, ~end=-1, raw)
     | _ => raw
     }
     /* remove search portion if present in string */
-    let raw = switch raw |> Js.String.splitAtMost("?", ~limit=2) {
+    let raw = switch String.splitAtMost("?", ~limit=2, raw) {
     | [path, _] => path
     | _ => raw
     }
 
-    raw
-    |> Js.String.split("/")
-    |> Js.Array.filter(item => String.length(item) != 0)
-    |> List.fromArray
+    List.fromArray(raw->String.split("/")->Array.filter(item => String.length(item) != 0))
   }
 
 @val external variantBasePath: string = "process.env.PAGES_PATH"
@@ -118,15 +113,15 @@ let useUrl = () => {
 
 let join = (s1, s2) =>
   `${s1}/${s2}`
-  ->Js.String2.replaceByRe(%re("/:\/\//g"), "__PROTOCOL__")
-  ->Js.String2.replaceByRe(%re("/\/+/g"), "/")
-  ->Js.String2.replaceByRe(%re("/__PROTOCOL__/g"), "://")
+  ->String.replaceRegExp(%re("/:\/\//g"), "__PROTOCOL__")
+  ->String.replaceRegExp(%re("/\/+/g"), "/")
+  ->String.replaceRegExp(%re("/__PROTOCOL__/g"), "://")
 
 @val external t: string => string = "__"
 @val external tr: string => React.element = "__"
 
-let makeVariantUrl = join(variantBasePath)
-let makeBaseUrl = join(basePath)
+let makeVariantUrl = value => join(variantBasePath, value)
+let makeBaseUrl = value => join(basePath, value)
 
 module Emotion = {
   @module("@emotion/css") external css: {..} => string = "css"
@@ -147,16 +142,18 @@ module Link = {
     ~children,
   ) => {
     let url = useUrl()
-    let path = "/" ++ String.concat("/", url.path)
-    let compareHref = matchHref->Option.getWithDefault(href)
+    let path = "/" ++ url.path->List.toArray->Array.join("/")
+    let compareHref = matchHref->Option.getOr(href)
     let isActive = matchSubroutes
-      ? Js.String.startsWith(compareHref, path ++ "/") || Js.String.startsWith(compareHref, path)
+      ? (path ++ "/")->String.startsWith(compareHref) || path->String.startsWith(compareHref)
       : path === compareHref || path ++ "/" === compareHref
     let href = makeVariantUrl(href)
     <a
       href
       ?title
-      className={Emotion.cx([className, isActive ? activeClassName : None]->Array.keepMap(x => x))}
+      className={Emotion.cx(
+        [className, isActive ? activeClassName : None]->Array.filterMap(x => x),
+      )}
       style=?{switch (style, isActive ? activeStyle : None) {
       | (Some(a), Some(b)) => Some(ReactDOM.Style.combine(a, b))
       | (Some(a), None) => Some(a)
@@ -252,28 +249,30 @@ module Redirect = {
 
 module Context = {
   type t = {
-    lists: Map.String.t<Map.String.t<Map.Int.t<AsyncData.t<result<paginated<listItem>, error>>>>>,
-    items: Map.String.t<Map.String.t<AsyncData.t<result<item, error>>>>,
-    mutable listsRequests: MutableMap.String.t<Map.String.t<Set.Int.t>>,
-    mutable itemsRequests: MutableMap.String.t<Set.String.t>,
+    lists: Belt.Map.String.t<
+      Belt.Map.String.t<Belt.Map.Int.t<AsyncData.t<result<paginated<listItem>, error>>>>,
+    >,
+    items: Belt.Map.String.t<Belt.Map.String.t<AsyncData.t<result<item, error>>>>,
+    mutable listsRequests: Belt.MutableMap.String.t<Belt.Map.String.t<Belt.Set.Int.t>>,
+    mutable itemsRequests: Belt.MutableMap.String.t<Belt.Set.String.t>,
   }
   type context = (t, (t => t) => unit)
   let default = {
-    lists: Map.String.empty,
-    items: Map.String.empty,
-    listsRequests: MutableMap.String.make(),
-    itemsRequests: MutableMap.String.make(),
+    lists: Belt.Map.String.empty,
+    items: Belt.Map.String.empty,
+    listsRequests: Belt.MutableMap.String.make(),
+    itemsRequests: Belt.MutableMap.String.make(),
   }
   let defaultSetState: (t => t) => unit = _ => ()
   let context = React.createContext((default, defaultSetState))
 
   module Provider = {
-    let make = React.Context.provider(context)
+    let make = context->React.Context.provider
   }
 
   @react.component
-  let make = (~value: option<t>=?, ~serverUrl=?, ~config, ~children) => {
-    let (value, setValue) = React.useState(() => value->Option.getWithDefault(default))
+  let make = (~value: option<t>, ~serverUrl=?, ~config, ~children) => {
+    let (value, setValue) = React.useState(() => value->Option.getOr(default))
 
     <ServerUrlContext.Provider value=serverUrl>
       <Head>
@@ -286,38 +285,42 @@ module Context = {
   }
 }
 
+external asPaginated: JSON.t => paginated<listItem> = "%identity"
+
 let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
   result<paginated<listItem>, error>,
 > => {
   let direction = direction->directionAsString
   let ({lists, listsRequests}: Context.t, setContext) = React.useContext(Context.context)
-  listsRequests->MutableMap.String.update(collection, collection => Some(
+  listsRequests->Belt.MutableMap.String.update(collection, collection => Some(
     collection
-    ->Option.getWithDefault(Map.String.empty)
-    ->Map.String.update(direction, requests => Some(
-      requests->Option.getWithDefault(Set.Int.empty)->Set.Int.add(page),
+    ->Option.getOr(Belt.Map.String.empty)
+    ->Belt.Map.String.update(direction, requests => Some(
+      requests->Option.getOr(Belt.Set.Int.empty)->Belt.Set.Int.add(page),
     )),
   ))
 
   React.useEffect1(() => {
     switch lists
-    ->Map.String.get(collection)
-    ->Option.flatMap(collection => collection->Map.String.get(direction))
-    ->Option.flatMap(sortedCollection => sortedCollection->Map.Int.get(page)) {
+    ->Belt.Map.String.get(collection)
+    ->Option.flatMap(collection => collection->Belt.Map.String.get(direction))
+    ->Option.flatMap(sortedCollection => sortedCollection->Belt.Map.Int.get(page)) {
     | Some(_) => None
     | None =>
       let status = AsyncData.Loading
       setContext(context => {
         ...context,
-        lists: context.lists->Map.String.update(
+        lists: context.lists->Belt.Map.String.update(
           collection,
           collection => Some(
             collection
-            ->Option.getWithDefault(Map.String.empty)
-            ->Map.String.update(
+            ->Option.getOr(Belt.Map.String.empty)
+            ->Belt.Map.String.update(
               direction,
               sortedCollection => Some(
-                sortedCollection->Option.getWithDefault(Map.Int.empty)->Map.Int.set(page, status),
+                sortedCollection
+                ->Option.getOr(Belt.Map.Int.empty)
+                ->Belt.Map.Int.set(page, status),
               ),
             ),
           ),
@@ -329,7 +332,7 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
         ->Future.mapError(~propagateCancel=true, mapError)
         ->Future.mapResult(~propagateCancel=true, response =>
           switch response {
-          | {ok: true, response: Some(value)} => Ok(Js.Json.deserializeUnsafe(value))
+          | {ok: true, response: Some(value)} => Ok(JSON.parseExn(value)->asPaginated)
           | _ => Error(EmptyResponse)
           }
         )
@@ -338,17 +341,17 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
         setContext(
           context => {
             ...context,
-            lists: context.lists->Map.String.update(
+            lists: context.lists->Belt.Map.String.update(
               collection,
               collection => Some(
                 collection
-                ->Option.getWithDefault(Map.String.empty)
-                ->Map.String.update(
+                ->Option.getOr(Belt.Map.String.empty)
+                ->Belt.Map.String.update(
                   direction,
                   sortedCollection => Some(
                     sortedCollection
-                    ->Option.getWithDefault(Map.Int.empty)
-                    ->Map.Int.set(page, Done(result)),
+                    ->Option.getOr(Belt.Map.Int.empty)
+                    ->Belt.Map.Int.set(page, Done(result)),
                   ),
                 ),
               ),
@@ -362,31 +365,33 @@ let useCollection = (~page=0, ~direction=#desc, collection): AsyncData.t<
   }, [page])
 
   lists
-  ->Map.String.get(collection)
-  ->Option.flatMap(collection => collection->Map.String.get(direction))
-  ->Option.flatMap(collection => collection->Map.Int.get(page))
-  ->Option.getWithDefault(NotAsked)
+  ->Belt.Map.String.get(collection)
+  ->Option.flatMap(collection => collection->Belt.Map.String.get(direction))
+  ->Option.flatMap(collection => collection->Belt.Map.Int.get(page))
+  ->Option.getOr(NotAsked)
 }
+
+external asItem: JSON.t => item = "%identity"
 
 let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
   let ({items, itemsRequests}: Context.t, setContext) = React.useContext(Context.context)
-  itemsRequests->MutableMap.String.update(collection, items => Some(
-    items->Option.getWithDefault(Set.String.empty)->Set.String.add(id),
+  itemsRequests->Belt.MutableMap.String.update(collection, items => Some(
+    items->Option.getOr(Belt.Set.String.empty)->Belt.Set.String.add(id),
   ))
 
   React.useEffect1(() => {
     switch items
-    ->Map.String.get(collection)
-    ->Option.flatMap(collection => collection->Map.String.get(id)) {
+    ->Belt.Map.String.get(collection)
+    ->Option.flatMap(collection => collection->Belt.Map.String.get(id)) {
     | Some(_) => None
     | None =>
       let status = AsyncData.Loading
       setContext(context => {
         ...context,
-        items: context.items->Map.String.update(
+        items: context.items->Belt.Map.String.update(
           collection,
           collection => Some(
-            collection->Option.getWithDefault(Map.String.empty)->Map.String.set(id, status),
+            collection->Option.getOr(Belt.Map.String.empty)->Belt.Map.String.set(id, status),
           ),
         ),
       })
@@ -396,7 +401,7 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
         ->Future.mapError(~propagateCancel=true, mapError)
         ->Future.mapResult(~propagateCancel=true, response =>
           switch response {
-          | {ok: true, response: Some(value)} => Ok(Js.Json.deserializeUnsafe(value))
+          | {ok: true, response: Some(value)} => Ok(JSON.parseExn(value)->asItem)
           | _ => Error(EmptyResponse)
           }
         )
@@ -405,12 +410,12 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
         setContext(
           context => {
             ...context,
-            items: context.items->Map.String.update(
+            items: context.items->Belt.Map.String.update(
               collection,
               collection => Some(
                 collection
-                ->Option.getWithDefault(Map.String.empty)
-                ->Map.String.set(id, Done(result)),
+                ->Option.getOr(Belt.Map.String.empty)
+                ->Belt.Map.String.set(id, Done(result)),
               ),
             ),
           },
@@ -422,46 +427,52 @@ let useItem = (collection, ~id): AsyncData.t<result<item, error>> => {
   }, [id])
 
   items
-  ->Map.String.get(collection)
-  ->Option.flatMap(collection => collection->Map.String.get(id))
-  ->Option.getWithDefault(NotAsked)
+  ->Belt.Map.String.get(collection)
+  ->Option.flatMap(collection => collection->Belt.Map.String.get(id))
+  ->Option.getOr(NotAsked)
 }
 
 @get external textContent: Dom.element => string = "textContent"
 
 module App = {
+  type appProps = {
+    url: RescriptReactRouter.url,
+    config: config,
+  }
+
   @react.component
   let make = (~config, ~app) => {
     let url = useUrl()
-    React.createElement(app, {"url": url, "config": config})
+    React.createElement(app, {url, config})
   }
 }
 
 type bootMode = [#hydrate | #render]
 @val external pagesBootMode: bootMode = "window.PAGES_BOOT_MODE"
 
+external asContext: JSON.t => Context.t = "%identity"
+
 let start = (app, config) => {
-  let root = ReactDOM.querySelector("#root")
+  let rootElement = ReactDOM.querySelector("#root")
   let initialData =
     ReactDOM.querySelector("#initialData")
     ->Option.map(textContent)
-    ->Option.map(Js.Json.deserializeUnsafe)
-  switch (root, initialData, pagesBootMode) {
-  | (Some(root), Some(initialData), #hydrate) =>
-    ReactDOM.hydrate(
-      <Context config value=initialData>
+    ->Option.map(x => JSON.parseExn(x)->asContext)
+  switch (rootElement, initialData, pagesBootMode) {
+  | (Some(rootElement), Some(initialData), #hydrate) =>
+    let _ = ReactDOM.Client.hydrateRoot(
+      rootElement,
+      <Context config value=Some(initialData)>
         <App app config />
       </Context>,
-      root,
     )
   | (Some(root), None, #hydrate | #render) | (Some(root), Some(_), #render) =>
-    ReactDOM.render(
-      <Context config>
+    ReactDOM.Client.createRoot(root)->ReactDOM.Client.Root.render(
+      <Context config value=None>
         <App app config />
       </Context>,
-      root,
     )
-  | (None, _, _) => Js.Console.error(`Can't find the app's root container`)
+  | (None, _, _) => Console.error(`Can't find the app's root container`)
   }
 }
 
@@ -470,26 +481,17 @@ type emotion
 @module external emotion: emotion = "@emotion/css"
 
 type app = {
-  app: React.component<{"config": config, "url": RescriptReactRouter.url}>,
-  container: React.component<{
-    "config": config,
-    "app": React.component<{
-      "config": config,
-      "url": RescriptReactRouter.url,
-    }>,
-  }>,
+  app: React.component<App.appProps>,
+  container: React.component<App.props<config, React.component<App.appProps>>>,
   config: config,
-  provider: React.component<{
-    "config": config,
-    "serverUrl": option<RescriptReactRouter.url>,
-    "value": option<Context.t>,
-    "children": React.element,
-  }>,
+  provider: React.component<
+    Context.props<option<Context.t>, RescriptReactRouter.url, config, React.element>,
+  >,
   emotion: emotion,
 }
 
 let make = (app, config) => {
-  if Js.typeof(window) != "undefined" {
+  if typeof(window) != #undefined {
     start(app, config)
   }
   {app, container: App.make, config, provider: Context.make, emotion}

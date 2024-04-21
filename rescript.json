@@ -1,9 +1,7 @@
 {
   "name": "rescript-pages",
   "version": "0.1.0",
-  "reason": {
-    "react-jsx": 3
-  },
+  "jsx": { "version": 4 },
   "sources": [
     {
       "dir": "src",
@@ -21,18 +19,20 @@
     }
   ],
   "package-specs": {
-    "module": "es6",
+    "module": "esmodule",
     "in-source": true
   },
   "suffix": ".mjs",
   "bs-dependencies": [
     "@rescript/react",
+    "@rescript/core",
     "rescript-asyncdata",
     "rescript-future",
     "rescript-request"
   ],
-  "bs-dev-dependencies": ["rescript-test"],
+  "bs-dev-dependencies": ["rescript-nodejs", "rescript-test"],
   "warnings": {
     "error": "+101"
-  }
+  },
+  "bsc-flags": ["-open RescriptCore"]
 }

@@ -20,7 +20,7 @@ type item = {
   title: string,
   date: option<string>,
   draft: bool,
-  meta: Js.Dict.t<Js.Json.t>,
+  meta: Dict.t<JSON.t>,
   body: string,
 }
 ```
@@ -52,7 +52,7 @@ type listItem = {
   title: string,
   date: option<string>,
   draft: bool,
-  meta: Js.Dict.t<Js.Json.t>,
+  meta: Dict.t<JSON.t>,
   summary: string,
 }
 
@@ -62,7 +62,6 @@ type paginated = {
   items: array<listItem>,
 }
 ```
-
 
 ## AsyncData
 
