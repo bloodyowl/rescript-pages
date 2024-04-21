@@ -69,7 +69,7 @@ let default = Pages.make(
         contentDirectory: "contents", /* Where to find markdown contents */
         getUrlsToPrerender: getUrlsToPrerender,
         getRedirectMap: Some(_ =>
-          Js.Dict.fromArray([("old-url", "new-url")])
+          Dict.fromArray([("old-url", "new-url")])
         ),
       },
     ],

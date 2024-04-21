@@ -4,7 +4,7 @@ type listItem = {
   title: string,
   date: option<string>,
   draft: bool,
-  meta: Js.Dict.t<Js.Json.t>,
+  meta: Dict.t<JSON.t>,
   summary: string,
 }
 
@@ -14,7 +14,7 @@ type item = {
   title: string,
   date: option<string>,
   draft: bool,
-  meta: Js.Dict.t<Js.Json.t>,
+  meta: Dict.t<JSON.t>,
   body: string,
 }
 
@@ -29,7 +29,7 @@ type variant = {
   localeFile: option<string>,
   contentDirectory: string,
   getUrlsToPrerender: urlStore => array<string>,
-  getRedirectMap: option<urlStore => Js.Dict.t<string>>,
+  getRedirectMap: option<urlStore => Dict.t<string>>,
 }
 
 type mode = SPA | Static

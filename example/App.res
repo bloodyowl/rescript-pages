@@ -411,14 +411,14 @@ module ShowcaseWebsite = {
 
   @react.component
   let make = (~title, ~url, ~image) => {
-    let imageRef = React.useRef(Js.Nullable.null)
+    let imageRef = React.useRef(Nullable.null)
     let (imageRatio, setImageRatio) = React.useState(() => None)
 
     React.useEffect0(() => {
-      switch imageRef.current->Js.Nullable.toOption {
+      switch imageRef.current->Nullable.toOption {
       | Some(image) =>
         let image = image->elementAsObject
-        Js.log(image["complete"])
+        Console.log(image["complete"])
         if image["complete"] {
           setImageRatio(_ => Some(image["naturalHeight"] /. image["naturalWidth"]))
         }
@@ -557,7 +557,7 @@ let default = Pages.make(
         getUrlsToPrerender,
         getRedirectMap: Some(
           _ => {
-            Js.Dict.fromArray([("old_url", "new_url")])
+            Dict.fromArray([("old_url", "new_url")])
           },
         ),
       },

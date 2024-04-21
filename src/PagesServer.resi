@@ -8,14 +8,14 @@ let getWebpackConfig: (
 ) => array<{
   "devtool": bool,
   "entry": string,
-  "externals": Js.Dict.t<string>,
+  "externals": Dict.t<string>,
   "mode": mode,
-  "resolve": {"modules": array<string>, "alias": Js.Dict.t<string>},
+  "resolve": {"modules": array<string>, "alias": Dict.t<string>},
   "experiments": {"outputModule": bool},
   "output": {
     "chunkFilename": string,
     "filename": string,
-    "libraryTarget": Js.Undefined.t<string>,
+    "libraryTarget": Nullable.t<string>,
     "path": string,
     "publicPath": string,
   },
@@ -23,8 +23,4 @@ let getWebpackConfig: (
   "target": string,
 }>
 
-let getFiles: (
-  Pages.config,
-  (. string, string) => string,
-  mode,
-) => Js.Promise.t<array<(string, string)>>
+let getFiles: (Pages.config, (string, string) => string, mode) => Promise.t<array<(string, string)>>
